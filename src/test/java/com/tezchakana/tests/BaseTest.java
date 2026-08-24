@@ -23,7 +23,6 @@ public class BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         printPreflightChecklist();
-        clearAppData();
 
         UiAutomator2Options options = new UiAutomator2Options()
                 .setAppPackage(APP_PACKAGE)
@@ -49,7 +48,7 @@ public class BaseTest {
         System.out.println("=== Preflight checklist ===");
         System.out.println("[" + (emulatorUp ? "OK" : "FAIL") + "] Android emulator visible in `adb devices`");
         System.out.println("[" + (appiumUp ? "OK" : "FAIL") + "] Appium server reachable at " + APPIUM_URL);
-        System.out.println("[..] App data will be reset before this run (pm clear " + APP_PACKAGE + ")");
+        System.out.println("[..] App data is kept as-is (pm clear skipped to preserve login session)");
         System.out.println("===========================");
 
         if (!emulatorUp) {
@@ -82,8 +81,4 @@ public class BaseTest {
         }
     }
 
-    private void clearAppData() throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("adb", "shell", "pm", "clear", APP_PACKAGE).start();
-        process.waitFor();
-    }
 }

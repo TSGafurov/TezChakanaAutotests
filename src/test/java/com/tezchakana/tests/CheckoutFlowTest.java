@@ -38,8 +38,13 @@ public class CheckoutFlowTest extends BaseTest {
     // Плитка "Suv" внутри секции "Suv va ichimliklar" (см. "Scroll to water.xml").
     private static final By WATER_CATEGORY_TILE = AppiumBy.accessibilityId("Suv");
 
-    private static final String HYDROLIFE_330ML_DESC = "1 490 so'm\nSuv Hydrolife gazsiz 330 ml";
-    private static final By HYDROLIFE_PRODUCT_CARD = AppiumBy.accessibilityId(HYDROLIFE_330ML_DESC);
+    // descriptionContains по уникальной подстроке без переноса строки (embedding a raw
+    // newline внутрь selector-выражения UiAutomator рискованно - может сломать парсинг),
+    // а не точный accessibility id: если товар уже есть в корзине, приложение дописывает к
+    // content-desc количество ("...330 ml\n1"), и точное совпадение перестаёт находить
+    // карточку.
+    private static final By HYDROLIFE_PRODUCT_CARD =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Suv Hydrolife gazsiz 330 ml\")");
 
     // Нижний зелёный бар с суммой/количеством ("1 490 so'm \n1 mahsulot"), появляется
     // на экране категории сразу после добавления товара - открывает мини-корзину.
@@ -48,20 +53,34 @@ public class CheckoutFlowTest extends BaseTest {
     // Мини-корзина (bottom sheet), открывается после тапа по CART_SUMMARY_BAR.
     private static final By PROCEED_TO_CHECKOUT = AppiumBy.accessibilityId("Savat\nTo'lovga o'tish");
 
+    // Экран 1080x2400, на котором сняты все координатные bounds ниже (см. Appium Inspector
+    // XML снимки). Реальные тапы масштабируются под фактический размер экрана устройства
+    // через scaledX()/scaledY() - см. эти методы.
+    private static final int REFERENCE_SCREEN_WIDTH = 1080;
+    private static final int REFERENCE_SCREEN_HEIGHT = 2400;
+
     // Элементы "Kirish" на экране "Вход в профиль.xml" имеют clickable="false" в дереве
     // accessibility - рабочего локатора нет, поэтому тапаем по координатам центра нижней
-    // кнопки "Kirish" (bounds [485,2193][595,2240] на экране 1080x2400 из снимка). Хрупко
-    // на других разрешениях/плотностях экрана - заменить на нормальный локатор, как только
-    // будет снимок с настоящим clickable-элементом.
-    private static final int LOGIN_PROMPT_KIRISH_X = 540;
-    private static final int LOGIN_PROMPT_KIRISH_Y = 2216;
+    // кнопки "Kirish" (bounds [485,2193][595,2240] на экране 1080x2400 из снимка).
+    private static final int LOGIN_PROMPT_KIRISH_REF_X = 540;
+    private static final int LOGIN_PROMPT_KIRISH_REF_Y = 2216;
 
     // Нижняя красная CTA-кнопка ("To'lovga o'tish" / "Davom etish" / "Tasdiqlash") тоже
     // смержена в один accessibility-узел на весь экран - click() тапает по ЦЕНТРУ экрана
-    // (примерно y=1200), а не по самой кнопке внизу (~y=2184), поэтому промахивается.
-    // Подтверждено вручную через adb: тап по (540,2184) стабильно попадает в кнопку.
-    private static final int BOTTOM_CTA_X = 540;
-    private static final int BOTTOM_CTA_Y = 2184;
+    // (примерно y=1200), а не по самой кнопке внизу, поэтому промахивается.
+    // Изначально снято как (540,2184) на экране 1080x2400, но при масштабировании под
+    // физическое устройство 720x1600 промахивалось выше кнопки (видимо, из-за разной
+    // высоты статус-бара/системной навигации между эталонным снимком и реальным
+    // устройством, даже при одинаковом соотношении сторон экрана) - визуально подтверждено
+    // на устройстве, что кнопка ближе к ~95% высоты экрана, скорректировано до 2286.
+    private static final int BOTTOM_CTA_REF_X = 540;
+    private static final int BOTTOM_CTA_REF_Y = 2286;
+
+    // Нижняя вкладка "Bosh sahifa" (иконка домика) - тоже без content-desc/resource-id
+    // (не находится ни через accessibility id, ни через uiautomator dump на этом экране),
+    // поэтому тап по координатам. Позиция снята с того же снимка 1080x2400.
+    private static final int HOME_TAB_REF_X = 150;
+    private static final int HOME_TAB_REF_Y = 2313;
 
     private static final By PHONE_INPUT_FIELD = AppiumBy.className("android.widget.EditText");
     private static final By CONTINUE_BUTTON = AppiumBy.accessibilityId("Telefon raqamini kiriting\nDavom etish");
@@ -103,7 +122,23 @@ public class CheckoutFlowTest extends BaseTest {
     }
 
     private void openBazarTab() {
+        returnToHomeScreen();
         waitFor(BAZAR_TAB).click();
+    }
+
+    // noReset(true) сохраняет данные приложения, но НЕ сбрасывает in-app навигацию -
+    // новая Appium-сессия просто подхватывается к тому экрану, на котором предыдущая
+    // сессия/разведка оставила приложение (может быть где угодно, не обязательно Home).
+    // Тап по нижней вкладке "Home" не прыгает сразу на глобальный Home, а сворачивает
+    // текущий стек экранов по одному уровню за тап (подтверждено вручную: из категории
+    // товаров первый тап приводит на корень магазина, только следующий - на Home), поэтому
+    // тапаем повторно, пока не появится вкладка "Bazar".
+    private void returnToHomeScreen() {
+        int maxTaps = 5;
+        while (driver.findElements(BAZAR_TAB).isEmpty() && maxTaps-- > 0) {
+            tapAt(scaledX(HOME_TAB_REF_X), scaledY(HOME_TAB_REF_Y));
+            sleep(Duration.ofMillis(700));
+        }
     }
 
     private void openEcoBazarStore() {
@@ -128,10 +163,14 @@ public class CheckoutFlowTest extends BaseTest {
         // Кнопка "+" не имеет своего content-desc/resource-id - относительный XPath от
         // найденного элемента ("./android.widget.ImageView[2]") не поддерживается
         // UiAutomator2 (NoSuchElementException), поэтому тапаем по координатам внутри
-        // карточки товара. Смещение [473,63] от левого верхнего угла карточки взято из
-        // снимка "Категория Вода.xml": карточка [0,1145][536,1788], кнопка [431,1166][515,1250].
+        // карточки товара. Позиция кнопки в снимке "Категория Вода.xml": карточка
+        // [0,1145][536,1788], кнопка [431,1166][515,1250] - как доля ширины/высоты
+        // карточки (0.883, 0.098), а не как смещение в чужих пикселях, чтобы не зависеть
+        // от реального размера карточки на экране устройства.
         var cardRect = productCard.getRect();
-        tapAt(cardRect.getX() + 473, cardRect.getY() + 63);
+        int tapX = cardRect.getX() + (int) Math.round(cardRect.getWidth() * 0.883);
+        int tapY = cardRect.getY() + (int) Math.round(cardRect.getHeight() * 0.098);
+        tapAt(tapX, tapY);
     }
 
     private void openCartSummaryBar() {
@@ -140,7 +179,7 @@ public class CheckoutFlowTest extends BaseTest {
 
     private void proceedToCheckoutFromMiniCart() {
         waitFor(PROCEED_TO_CHECKOUT);
-        tapAt(BOTTOM_CTA_X, BOTTOM_CTA_Y);
+        tapAt(scaledX(BOTTOM_CTA_REF_X), scaledY(BOTTOM_CTA_REF_Y));
     }
 
     private void confirmLoginPrompt() {
@@ -151,13 +190,13 @@ public class CheckoutFlowTest extends BaseTest {
         new WebDriverWait(driver, WAIT_TIMEOUT)
                 .until(d -> !d.findElements(kirishNode).isEmpty());
         sleep(Duration.ofMillis(500));
-        tapAt(LOGIN_PROMPT_KIRISH_X, LOGIN_PROMPT_KIRISH_Y);
+        tapAt(scaledX(LOGIN_PROMPT_KIRISH_REF_X), scaledY(LOGIN_PROMPT_KIRISH_REF_Y));
     }
 
     private void submitPhoneNumber() {
         waitFor(PHONE_INPUT_FIELD).sendKeys(PHONE_NUMBER_DIGITS);
         waitFor(CONTINUE_BUTTON);
-        tapAt(BOTTOM_CTA_X, BOTTOM_CTA_Y);
+        tapAt(scaledX(BOTTOM_CTA_REF_X), scaledY(BOTTOM_CTA_REF_Y));
     }
 
     // Поле OTP - это 6-ячеечный pin-код виджет: Appium sendKeys() (ACTION_SET_TEXT) не
@@ -178,7 +217,7 @@ public class CheckoutFlowTest extends BaseTest {
 
     private void confirmOtpCode() {
         waitFor(CONFIRM_OTP_BUTTON);
-        tapAt(BOTTOM_CTA_X, BOTTOM_CTA_Y);
+        tapAt(scaledX(BOTTOM_CTA_REF_X), scaledY(BOTTOM_CTA_REF_Y));
     }
 
     private void handleNotificationsPermission() {
@@ -199,9 +238,9 @@ public class CheckoutFlowTest extends BaseTest {
     }
 
     private void placeOrder() {
-        // Тоже смерженная на весь экран кнопка - см. комментарий у BOTTOM_CTA_X/Y.
+        // Тоже смерженная на весь экран кнопка - см. комментарий у BOTTOM_CTA_REF_X/Y.
         waitFor(PLACE_ORDER_BUTTON);
-        tapAt(BOTTOM_CTA_X, BOTTOM_CTA_Y);
+        tapAt(scaledX(BOTTOM_CTA_REF_X), scaledY(BOTTOM_CTA_REF_Y));
     }
 
     private void verifyOrderSuccess() {
@@ -245,6 +284,16 @@ public class CheckoutFlowTest extends BaseTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private int scaledX(int referenceX) {
+        int actualWidth = driver.manage().window().getSize().width;
+        return (int) Math.round(referenceX * ((double) actualWidth / REFERENCE_SCREEN_WIDTH));
+    }
+
+    private int scaledY(int referenceY) {
+        int actualHeight = driver.manage().window().getSize().height;
+        return (int) Math.round(referenceY * ((double) actualHeight / REFERENCE_SCREEN_HEIGHT));
     }
 
     private void tapAt(int x, int y) {
