@@ -1,5 +1,6 @@
 package com.tezchakana.tests;
 
+import com.tezchakana.config.TestConfig;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
 import org.testng.annotations.AfterMethod;
@@ -14,10 +15,6 @@ import java.time.Duration;
 
 public class BaseTest {
 
-    protected static final String APP_PACKAGE = "uz.agrobank.chakanaexpress";
-    protected static final String APP_ACTIVITY = ".MainActivity";
-    protected static final String APPIUM_URL = "http://127.0.0.1:4723";
-
     protected AndroidDriver driver;
 
     @BeforeMethod
@@ -25,13 +22,13 @@ public class BaseTest {
         printPreflightChecklist();
 
         UiAutomator2Options options = new UiAutomator2Options()
-                .setAppPackage(APP_PACKAGE)
-                .setAppActivity(APP_ACTIVITY)
+                .setAppPackage(TestConfig.appPackage())
+                .setAppActivity(TestConfig.appActivity())
                 .setNoReset(true)
                 .setAutoGrantPermissions(false)
                 .setNewCommandTimeout(Duration.ofSeconds(120));
 
-        driver = new AndroidDriver(new URI(APPIUM_URL).toURL(), options);
+        driver = new AndroidDriver(new URI(TestConfig.appiumUrl()).toURL(), options);
     }
 
     @AfterMethod
@@ -47,7 +44,7 @@ public class BaseTest {
 
         System.out.println("=== Preflight checklist ===");
         System.out.println("[" + (emulatorUp ? "OK" : "FAIL") + "] Android emulator visible in `adb devices`");
-        System.out.println("[" + (appiumUp ? "OK" : "FAIL") + "] Appium server reachable at " + APPIUM_URL);
+        System.out.println("[" + (appiumUp ? "OK" : "FAIL") + "] Appium server reachable at " + TestConfig.appiumUrl());
         System.out.println("[..] App data is kept as-is (pm clear skipped to preserve login session)");
         System.out.println("===========================");
 
@@ -55,7 +52,7 @@ public class BaseTest {
             throw new IllegalStateException("No Android emulator/device found. Start the emulator and check `adb devices`.");
         }
         if (!appiumUp) {
-            throw new IllegalStateException("Appium server is not reachable at " + APPIUM_URL + ". Start the Appium server first.");
+            throw new IllegalStateException("Appium server is not reachable at " + TestConfig.appiumUrl() + ". Start the Appium server first.");
         }
     }
 
@@ -68,7 +65,7 @@ public class BaseTest {
 
     private boolean isAppiumReachable() {
         try {
-            URL statusUrl = new URI(APPIUM_URL + "/status").toURL();
+            URL statusUrl = new URI(TestConfig.appiumUrl() + "/status").toURL();
             HttpURLConnection connection = (HttpURLConnection) statusUrl.openConnection();
             connection.setConnectTimeout(3000);
             connection.setReadTimeout(3000);
