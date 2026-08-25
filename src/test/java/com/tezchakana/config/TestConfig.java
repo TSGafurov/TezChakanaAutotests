@@ -74,6 +74,14 @@ public final class TestConfig {
         return get("product.grocery");
     }
 
+    public static String defaultAddressLabel() {
+        return get("address.default");
+    }
+
+    public static String alternateAddressLabel() {
+        return get("address.alternate");
+    }
+
     public static int referenceScreenWidth() {
         return Integer.parseInt(get("reference.screen.width"));
     }
