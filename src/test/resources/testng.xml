@@ -6,4 +6,14 @@
             <class name="com.tezchakana.tests.CheckoutFlowTest"/>
         </classes>
     </test>
+    <test name="Home and Catalog">
+        <classes>
+            <class name="com.tezchakana.tests.HomeAndCatalogTest"/>
+        </classes>
+    </test>
+    <test name="Checkout Details">
+        <classes>
+            <class name="com.tezchakana.tests.CheckoutDetailsTest"/>
+        </classes>
+    </test>
 </suite>

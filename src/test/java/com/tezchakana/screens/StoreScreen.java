@@ -11,7 +11,17 @@ public class StoreScreen extends BaseScreen {
 
     // Нижний зелёный бар с суммой/количеством ("1 490 so'm \n1 mahsulot"), появляется на
     // экране категории сразу после добавления товара - открывает мини-корзину.
-    private static final By CART_SUMMARY_BAR = AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"mahsulot\")");
+    // descriptionContains("mahsulot") ловил не тот элемент: в сетках категорий, где
+    // помимо самого бара есть заголовки секций вроде "Go'sht mahsulotlari"/"Sut
+    // mahsulotlari" (тоже содержат подстроку "mahsulot"), тап уходил в заголовок раньше
+    // бара по порядку в дереве - открывалась пустая корзина. descriptionMatches с "so'm"
+    // перед "mahsulot" ловит именно бар с суммой. Символьный класс [\s\S] (нужен, т.к.
+    // между "so'm" и "mahsulot" перенос строки, а "." его не матчит) на этом
+    // UiSelector-парсере на устройстве не сработал ни разу (проверено напрямую через
+    // curl к Appium REST) - похоже, экранирование "\\s"/"\\S" не долетает в нужном виде.
+    // Инлайн-флаг "(?s)" (DOTALL) сработал сразу же - используем его вместо класса символов.
+    private static final By CART_SUMMARY_BAR = AppiumBy.androidUIAutomator(
+            "new UiSelector().descriptionMatches(\"(?s).*so'm.*mahsulot.*\")");
 
     public StoreScreen(AndroidDriver driver) {
         super(driver);
@@ -59,5 +69,12 @@ public class StoreScreen extends BaseScreen {
     public CartScreen openCartSummaryBar() {
         waitFor(CART_SUMMARY_BAR).click();
         return new CartScreen(driver);
+    }
+
+    // STORE-03: содержимое бара ("<сумма> so'm \n<N> mahsulot") подтверждает, что тап
+    // "+" реально долетел до бэкенда, а не просто провалился в пустоту - см. также
+    // Known issue про нестабильное добавление в корзину в docs/exploration-notes.md.
+    public String getCartSummaryBarText() {
+        return waitFor(CART_SUMMARY_BAR).getAttribute("content-desc");
     }
 }

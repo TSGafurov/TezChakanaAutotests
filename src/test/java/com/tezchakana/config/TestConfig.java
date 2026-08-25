@@ -66,6 +66,14 @@ public final class TestConfig {
         return get("product.name");
     }
 
+    public static String groceryCategoryLabel() {
+        return get("category.grocery");
+    }
+
+    public static String groceryProductName() {
+        return get("product.grocery");
+    }
+
     public static int referenceScreenWidth() {
         return Integer.parseInt(get("reference.screen.width"));
     }
