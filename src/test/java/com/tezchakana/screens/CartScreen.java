@@ -21,25 +21,28 @@ public class CartScreen extends BaseScreen {
             AppiumBy.accessibilityId("Savatingizdagi barcha mahsulotlarni o'chirib tashlamoqchimisiz?");
     private static final By EMPTY_CART_MESSAGE =
             AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"bo'sh ko'rinadi\")");
-    // "O'chirish" (подтвердить очистку) - смерженный узел clickable=false с реальными
-    // (не на весь экран) bounds, тап по координатам центра, как и с другими такими
-    // узлами в приложении.
-    private static final int CLEAR_CART_CONFIRM_REF_X = 794;
-    private static final int CLEAR_CART_CONFIRM_REF_Y = 2237;
-
-    // "+" рядом с товаром в мини-корзине - без content-desc, только координаты (сняты
-    // со снимка карточки товара на экране 1080x2400: [912,427][996,511]). Метод
-    // предполагает единственную позицию в корзине, как и остальные CART-тесты.
-    private static final int QUANTITY_PLUS_REF_X = 954;
-    private static final int QUANTITY_PLUS_REF_Y = 469;
+    // "O'chirish" (подтвердить очистку) имеет свой content-desc, отличный от "Bekor
+    // qilish" (отмена) - раньше здесь был тап по координатам центра, что было
+    // ненадёжно только из-за отсутствия проверки; сам узел прекрасно находится по
+    // accessibility id (проверено live 2026-08-26), несмотря на clickable=false в
+    // дереве - это тот же паттерн, что и у кнопки подтверждения отмены заказа в
+    // ORDH-05.
+    private static final By CLEAR_CART_CONFIRM_BUTTON = AppiumBy.accessibilityId("O'chirish");
 
     private static final By ADD_TO_CART_ON_PRODUCT_SCREEN = AppiumBy.accessibilityId("Savatga qo'shish");
 
-    // Первая карточка блока рекомендаций "Hech narsani unutmadingizmi?" - позиция в
-    // шторке фиксирована, а конкретный товар в ней меняется от сессии к сессии
-    // (алгоритмическая рекомендация), поэтому тап по координатам, а не по названию.
-    private static final int RECOMMENDED_ITEM_REF_X = 312;
-    private static final int RECOMMENDED_ITEM_REF_Y = 1537;
+    // Блок рекомендаций в мини-корзине - конкретный товар в первой карточке меняется
+    // от сессии к сессии (алгоритмическая рекомендация), но сама карточка - обычный
+    // clickable-узел с собственным content-desc внутри секции "Hech narsani
+    // unutmadingizmi?" (проверено live 2026-08-26 - раньше ошибочно считалось, что
+    // карточка совсем без content-desc). XPath ищет первый clickable-потомок этой
+    // секции, а не координату - если секция с рекомендациями не отрисовалась,
+    // waitFor() упадёт по таймауту вместо тапа мимо, в смерженный на весь экран
+    // "Savat\nTo'lovga o'tish" (см. инцидент 2026-08-25,
+    // project-accidental-order-placement-incident в памяти проекта).
+    private static final By FIRST_RECOMMENDED_ITEM = AppiumBy.xpath(
+            "//android.view.View[@content-desc=\"Hech narsani unutmadingizmi?\"]"
+                    + "//android.view.View[@clickable=\"true\"][1]");
 
     public CartScreen(AndroidDriver driver) {
         super(driver);
@@ -63,7 +66,7 @@ public class CartScreen extends BaseScreen {
     public void clearCart() {
         waitFor(CLEAR_CART_BUTTON).click();
         waitFor(CLEAR_CART_CONFIRM_MESSAGE);
-        tapAt(scaledX(CLEAR_CART_CONFIRM_REF_X), scaledY(CLEAR_CART_CONFIRM_REF_Y));
+        waitFor(CLEAR_CART_CONFIRM_BUTTON).click();
         Assert.assertTrue(waitFor(EMPTY_CART_MESSAGE).isDisplayed(), "Корзина не опустела после \"Tozalash\"");
     }
 
@@ -74,9 +77,16 @@ public class CartScreen extends BaseScreen {
     }
 
     // CART-03: "+" пересчитывает "Umumiy qiymati" - сравнение до/после делает вызывающий
-    // тест через getTotalText().
-    public CartScreen increaseQuantity() {
-        tapAt(scaledX(QUANTITY_PLUS_REF_X), scaledY(QUANTITY_PLUS_REF_Y));
+    // тест через getTotalText(). Кнопка "+" без своего content-desc - второй
+    // clickable ImageView в строке товара (первый - "-"), поэтому находим её
+    // относительно строки товара по названию, а не по координатам (проверено live
+    // 2026-08-26) - если строка товара или её второй clickable-потомок не найдутся,
+    // упадёт с понятной ошибкой вместо тапа мимо.
+    public CartScreen increaseQuantity(String productDescriptionContains) {
+        By quantityPlusButton = AppiumBy.xpath(
+                "(//android.view.View[contains(@content-desc, \"" + productDescriptionContains + "\")]"
+                        + "/android.widget.ImageView[@clickable=\"true\"])[2]");
+        waitFor(quantityPlusButton).click();
         return this;
     }
 
@@ -90,7 +100,7 @@ public class CartScreen extends BaseScreen {
     // сумму нужно через StoreScreen.getCartSummaryBarText() на закрытой шторке (см.
     // close()), а не сразу здесь.
     public CartScreen addFirstRecommendedItem() {
-        tapAt(scaledX(RECOMMENDED_ITEM_REF_X), scaledY(RECOMMENDED_ITEM_REF_Y));
+        waitFor(FIRST_RECOMMENDED_ITEM).click();
         waitFor(ADD_TO_CART_ON_PRODUCT_SCREEN).click();
         driver.navigate().back();
         return this;

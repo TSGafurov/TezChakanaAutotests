@@ -13,18 +13,17 @@
     </test>
     <test name="Store and Cart">
         <classes>
-            <!-- CART-02/03/04 временно исключены (2026-08-25): addFirstRecommendedItem/
-                 increaseQuantity/clearCart тапают по фиксированным координатам, и при
-                 промахе тап проваливается через смерженный на весь мини-корзину CTA
-                 "Savat\nTo'lovga o'tish", что могло привести к непреднамеренному
-                 оформлению реальных заказов (TEZ00082/83/84, впоследствии отменены).
-                 Не включать обратно, пока эти методы не будут переписаны на поиск по
-                 элементам с проверкой присутствия вместо координат. -->
-            <class name="com.tezchakana.tests.StoreAndCartTest">
-                <methods>
-                    <include name="addingProductUpdatesCartSummaryAndMiniCart"/>
-                </methods>
-            </class>
+            <!-- CART-02/03/04 были временно исключены (2026-08-25) из-за
+                 addFirstRecommendedItem/increaseQuantity/clearCart, тапавших по
+                 фиксированным координатам - при промахе тап проваливался через
+                 смерженный на весь мини-корзину CTA "Savat\nTo'lovga o'tish", что
+                 привело к непреднамеренному оформлению реальных заказов
+                 (TEZ00082/83/84, впоследствии отменены через приложение). 2026-08-26
+                 все три метода переписаны на поиск по элементам (accessibility id /
+                 xpath относительно проверенного родителя) вместо координат - см.
+                 CartScreen.java и project-accidental-order-placement-incident в
+                 памяти проекта. Включены обратно. -->
+            <class name="com.tezchakana.tests.StoreAndCartTest"/>
         </classes>
     </test>
     <test name="Checkout Details">

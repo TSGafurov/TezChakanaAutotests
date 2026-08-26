@@ -63,7 +63,7 @@ public class StoreAndCartTest extends BaseTest {
 
         CartScreen cartScreen = storeScreen.openCartSummaryBar();
         String totalBefore = cartScreen.getTotalText();
-        cartScreen.increaseQuantity();
+        cartScreen.increaseQuantity(TestConfig.groceryProductName());
         String totalAfter = cartScreen.getTotalText();
 
         Assert.assertNotEquals(totalAfter, totalBefore,
