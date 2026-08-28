@@ -82,6 +82,14 @@ public final class TestConfig {
         return get("address.alternate");
     }
 
+    public static String chustSearchQuery() {
+        return get("address.search.chust");
+    }
+
+    public static String noCoverageSearchQuery() {
+        return get("address.search.no.coverage");
+    }
+
     public static int referenceScreenWidth() {
         return Integer.parseInt(get("reference.screen.width"));
     }

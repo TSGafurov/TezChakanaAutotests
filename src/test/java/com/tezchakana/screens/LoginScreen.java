@@ -3,6 +3,7 @@ package com.tezchakana.screens;
 import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -15,6 +16,7 @@ public class LoginScreen extends BaseScreen {
     private static final int LOGIN_PROMPT_KIRISH_REF_X = 540;
     private static final int LOGIN_PROMPT_KIRISH_REF_Y = 2216;
 
+    private static final By KIRISH_NODE = AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Kirish\")");
     private static final By PHONE_INPUT_FIELD = AppiumBy.className("android.widget.EditText");
     private static final By CONTINUE_BUTTON = AppiumBy.accessibilityId("Telefon raqamini kiriting\nDavom etish");
 
@@ -22,13 +24,27 @@ public class LoginScreen extends BaseScreen {
         super(driver);
     }
 
+    // CartScreen.proceedToCheckout() возвращает LoginScreen безусловно, но для уже
+    // авторизованного аккаунта тап по "To'lovga o'tish" ведёт сразу на экран чекаута
+    // (PaymentScreen), минуя этот промпт вовсе - см. CheckoutFlowTest, который должен
+    // отличать эти два случая (CHK-01, гостевой логин, тестируется именно этим классом).
+    // Короткий таймаут (не WAIT_TIMEOUT) - на авторизованном старте узла "Kirish" не
+    // появится совсем, и не стоит ждать 15 секунд впустую при каждом прогоне.
+    public boolean isLoginPromptShown() {
+        try {
+            return new WebDriverWait(driver, Duration.ofSeconds(3))
+                    .until(d -> !d.findElements(KIRISH_NODE).isEmpty());
+        } catch (TimeoutException e) {
+            return false;
+        }
+    }
+
     // Дожидаемся появления диалога (по некликабельному, но детектируемому узлу "Kirish"),
     // затем ждём завершения анимации bottom sheet перед тапом по координатам - иначе тап
     // попадает мимо настоящей позиции кнопки.
     public LoginScreen confirmPrompt() {
-        By kirishNode = AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Kirish\")");
         new WebDriverWait(driver, WAIT_TIMEOUT)
-                .until(d -> !d.findElements(kirishNode).isEmpty());
+                .until(d -> !d.findElements(KIRISH_NODE).isEmpty());
         sleep(Duration.ofMillis(500));
         tapAt(scaledX(LOGIN_PROMPT_KIRISH_REF_X), scaledY(LOGIN_PROMPT_KIRISH_REF_Y));
         return this;

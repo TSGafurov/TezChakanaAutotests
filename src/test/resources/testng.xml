@@ -31,4 +31,47 @@
             <class name="com.tezchakana.tests.CheckoutDetailsTest"/>
         </classes>
     </test>
+    <test name="Profile Authorized">
+        <classes>
+            <class name="com.tezchakana.tests.ProfileAuthorizedTest"/>
+        </classes>
+    </test>
+    <test name="Details">
+        <classes>
+            <class name="com.tezchakana.tests.DetailsTest"/>
+        </classes>
+    </test>
+    <test name="Addresses">
+        <classes>
+            <class name="com.tezchakana.tests.AddressesTest"/>
+        </classes>
+    </test>
+    <test name="Profile Guest">
+        <classes>
+            <class name="com.tezchakana.tests.ProfileGuestTest"/>
+        </classes>
+    </test>
+    <test name="Settings">
+        <classes>
+            <class name="com.tezchakana.tests.SettingsTest"/>
+        </classes>
+    </test>
+    <test name="Cards">
+        <classes>
+            <class name="com.tezchakana.tests.CardsTest"/>
+        </classes>
+    </test>
+    <test name="Orders">
+        <classes>
+            <class name="com.tezchakana.tests.OrdersTest"/>
+        </classes>
+    </test>
+    <test name="Address Coverage">
+        <classes>
+            <!-- Не идемпотентен - каждый прогон добавляет в адресную книгу ещё один
+                 адрес "Chust" (владелец аккаунта осведомлён и одобрил, 2026-08-28).
+                 См. javadoc AddressCoverageTest. -->
+            <class name="com.tezchakana.tests.AddressCoverageTest"/>
+        </classes>
+    </test>
 </suite>

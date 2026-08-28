@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "appium-mcp": {
+      "type": "stdio",
+      "command": "/Users/tsgdfurov/.local/share/appium-mcp/node_modules/.bin/appium-mcp",
+      "args": [],
+      "env": {}
+    },
+    "idea": {
+      "url": "http://127.0.0.1:64342/stream",
+      "type": "http"
+    }
+  }
+}

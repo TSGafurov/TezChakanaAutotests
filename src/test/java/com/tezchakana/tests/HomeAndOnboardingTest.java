@@ -5,7 +5,7 @@ import com.tezchakana.screens.HomeScreen;
 import org.testng.annotations.Test;
 
 /**
- * Home и стартовые диалоги без похода в магазин/корзину: ONB-04, HOME-01/03/05/06/07 (см.
+ * Home и стартовые диалоги без похода в магазин/корзину: ONB-04, HOME-01/02/03/05/06/07 (см.
  * docs/exploration-notes.md).
  *
  * ONB-01 (первый запуск на чистых данных) и полноценный ONB-03 (диалог разрешения на
@@ -32,6 +32,11 @@ public class HomeAndOnboardingTest extends BaseTest {
     @Test
     public void hammasiChipRendersStoreListAfterAnotherChip() {
         new HomeScreen(driver).verifyHammasiRendersListAfterAnotherChip();
+    }
+
+    @Test
+    public void tappingChipFiltersStoreList() {
+        new HomeScreen(driver).verifyChipFiltersStoreList();
     }
 
     @Test

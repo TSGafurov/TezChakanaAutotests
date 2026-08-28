@@ -1,6 +1,7 @@
 package com.tezchakana.screens;
 
 import com.tezchakana.config.TestConfig;
+import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
@@ -50,12 +51,76 @@ public abstract class BaseScreen {
         this.driver = driver;
     }
 
+    // Системный диалог "Location Accuracy" (пакет com.google.android.gms, НЕ часть
+    // тестируемого приложения) может перекрыть экран в произвольный момент после
+    // выдачи разрешения на геолокацию, не только сразу при переходе на Home - см.
+    // HomeScreen (issue 11 в docs/exploration-notes.md). 2026-08-27: разовой проверки
+    // перед returnToHomeScreen() оказалось недостаточно - диалог всплыл ПОСЛЕ того как
+    // Home уже был найден, сорвав дальнейшие findElement на других экранах. Проверяем
+    // на каждой итерации waitFor(), а не только в одном месте - иначе поймать момент
+    // появления диалога невозможно.
+    private static final By ROGUE_LOCATION_ACCURACY_DIALOG =
+            AppiumBy.androidUIAutomator("new UiSelector().textContains(\"No thanks\")");
+
+    // Диалог подтверждения адреса при (пере)запуске приложения (см. issue 8 в
+    // exploration-notes.md и HomeScreen.STARTUP_ADDRESS_DIALOG) - тот же класс риска,
+    // что и ROGUE_LOCATION_ACCURACY_DIALOG выше: 2026-08-28 воспроизведено вживую, что
+    // он может перекрыть совершенно ДРУГОЙ экран (Profile, не Home) в произвольный
+    // момент между действиями, а не только сразу после запуска - сорвал find на
+    // OrdersTest, никак не связанном с адресом. Проверяем на каждой итерации waitFor(),
+    // а не только в HomeScreen.returnToHomeScreen(). Пропускаем проверку, если сам
+    // ожидаемый locator - это диалог адреса (см. HomeScreen.verifyStartupAddressDialogShown,
+    // ONB-04) - иначе тест, который специально ждёт появления этого диалога, никогда
+    // его не увидит. "Ha, men shu yerdaman" - смерженный узел clickable=false с
+    // реальными (не на весь экран) bounds, тап по координате центра, как и везде для
+    // таких узлов; подтверждает уже активный адрес, ничего не меняет (тот же
+    // безопасный тап, что уже используется в HomeScreen.confirmStartupAddress()).
+    private static final By STARTUP_ADDRESS_DIALOG = AppiumBy.accessibilityId("Shu manzilga buyurtma berilsinmi?");
+    private static final int STARTUP_CONFIRM_ADDRESS_REF_X = 540;
+    private static final int STARTUP_CONFIRM_ADDRESS_REF_Y = 2069;
+
+    // 2026-08-28, воспроизведено вживую: сначала эта проверка стояла БЕЗУСЛОВНО перед
+    // каждым findElement (как ROGUE_LOCATION_ACCURACY_DIALOG выше) - лишний
+    // findElements() на КАЖДОЙ итерации опроса, даже когда диалога нет вообще,
+    // заметно замедлил поллинг и превратил на вид не связанный OrdersTest в
+    // регулярно падающий по таймауту (первый прогон профиля после старта грузит
+    // "Buyurtmalar" не мгновенно - лишний round-trip на каждой попытке съедал запас
+    // из отведённых 15 секунд). Поэтому здесь порядок обратный: сначала ищем то, что
+    // реально нужно тесту, и лишь если НЕ нашли - проверяем диалог как запасной
+    // вариант, ничего не отнимая у "здорового" случая, когда диалога нет.
     protected WebElement waitFor(By locator) {
         return new WebDriverWait(driver, WAIT_TIMEOUT)
                 .until(d -> {
-                    WebElement element = d.findElement(locator);
-                    return element.isDisplayed() ? element : null;
+                    clickIfPresent(ROGUE_LOCATION_ACCURACY_DIALOG, Duration.ofMillis(200));
+                    List<WebElement> found = d.findElements(locator);
+                    if (!found.isEmpty() && found.get(0).isDisplayed()) {
+                        return found.get(0);
+                    }
+                    if (!locator.toString().contains("berilsinmi")) {
+                        dismissStartupAddressDialogIfPresent();
+                    }
+                    return null;
                 });
+    }
+
+    private void dismissStartupAddressDialogIfPresent() {
+        if (!driver.findElements(STARTUP_ADDRESS_DIALOG).isEmpty()) {
+            tapAt(scaledX(STARTUP_CONFIRM_ADDRESS_REF_X), scaledY(STARTUP_CONFIRM_ADDRESS_REF_Y));
+        }
+    }
+
+    // 2026-08-28, воспроизведено вживую: закрытие диалога (например, "Yo'q" в
+    // ORDH-03) не убирает узел из дерева доступности мгновенно - есть анимация
+    // закрытия. Проверка isEmpty() сразу после тапа один раз поймала диалог
+    // мид-анимации и ошибочно посчитала его всё ещё открытым, из-за чего тест не
+    // просто дал ложный fail, а оставил РЕАЛЬНЫЙ диалог открытым на экране до конца
+    // прогона (assert бросает исключение раньше, чем успевает закрыться) - это
+    // унаследовала следующая сессия как нераспознанный экран, что в HomeScreen.
+    // returnToHomeScreen() увело back-ом за пределы приложения. Ждём исчезновения
+    // вместо мгновенной проверки.
+    protected void waitUntilGone(By locator) {
+        new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(d -> d.findElements(locator).isEmpty());
     }
 
     protected boolean clickIfPresent(By locator, Duration timeout) {
