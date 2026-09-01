@@ -79,6 +79,11 @@
             <class name="com.tezchakana.tests.OrdersTest"/>
         </classes>
     </test>
+    <test name="Notifications">
+        <classes>
+            <class name="com.tezchakana.tests.NotificationsTest"/>
+        </classes>
+    </test>
     <!-- OrderErrorTest/OrderRetryTest ВРЕМЕННО ИСКЛЮЧЕНЫ из сьюта 2026-08-31: обнаружено
          вживую, что оба теста могут оставлять РЕАЛЬНЫЕ подтверждённые заказы
          (TEZ00167/TEZ00168/TEZ00169 - 3 штуки за день, отменены через приложение)

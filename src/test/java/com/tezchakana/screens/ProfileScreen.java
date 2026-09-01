@@ -34,6 +34,7 @@ public class ProfileScreen extends BaseScreen {
     private static final By DETAILS_CARD = AppiumBy.accessibilityId("Mening tafsilotlarim");
     private static final By ADDRESSES_CARD = AppiumBy.accessibilityId("Manzillar");
     private static final By CARDS_CARD = AppiumBy.accessibilityId("Mening kartalarim");
+    private static final By NOTIFICATIONS_CARD = AppiumBy.accessibilityId("Xabarnomalar");
     private static final By LOGOUT_CARD = AppiumBy.accessibilityId("Hisobdan chiqish");
 
     // Диалог подтверждения выхода - заголовок/сообщение/кнопки не имеют отдельных
@@ -144,6 +145,12 @@ public class ProfileScreen extends BaseScreen {
     public CardsScreen openCards() {
         waitFor(CARDS_CARD).click();
         return new CardsScreen(driver);
+    }
+
+    // NOTIF-01: "Xabarnomalar" - проверено вживую 2026-09-01 (см. NotificationsScreen).
+    public NotificationsScreen openNotifications() {
+        waitFor(NOTIFICATIONS_CARD).click();
+        return new NotificationsScreen(driver);
     }
 
     // SET-01..05: "Sozlamalar" доступна и гостю, и авторизованному (см. карту экранов
