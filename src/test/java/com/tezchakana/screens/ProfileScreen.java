@@ -154,6 +154,20 @@ public class ProfileScreen extends BaseScreen {
         return new SettingsScreen(driver);
     }
 
+    // SET-01: "Sozlamalar" - accessibility id на узбекском, ломается, если сейчас
+    // выбран другой язык интерфейса ("Настройки" по-русски). Позиция строки в списке
+    // (5-я, после Mening tafsilotlarim/Manzillar/Mening kartalarim/Xabarnomalar)
+    // одинакова независимо от языка - проверено вживую 2026-08-29 на узбекском и
+    // русском. Использовать этот метод вместо openSettings() только там, где нельзя
+    // полагаться на текущий язык интерфейса (например, сразу после переключения языка).
+    private static final int SETTINGS_ROW_REF_X = 268;
+    private static final int SETTINGS_ROW_REF_Y = 1994;
+
+    public SettingsScreen openSettingsRegardlessOfLanguage() {
+        tapAt(scaledX(SETTINGS_ROW_REF_X), scaledY(SETTINGS_ROW_REF_Y));
+        return new SettingsScreen(driver);
+    }
+
     // PROF-G01: гостевое состояние показывает "Kirish" и доступные без логина разделы.
     public ProfileScreen verifyGuestStateShown() {
         Assert.assertTrue(waitFor(GUEST_KIRISH_BUTTON).isDisplayed(),

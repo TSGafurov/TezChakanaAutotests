@@ -20,6 +20,15 @@ public class LoginScreen extends BaseScreen {
     private static final By PHONE_INPUT_FIELD = AppiumBy.className("android.widget.EditText");
     private static final By CONTINUE_BUTTON = AppiumBy.accessibilityId("Telefon raqamini kiriting\nDavom etish");
 
+    // "Davom etish" на этом экране - НЕ стандартный нижний merged-CTA (BaseScreen.tapBottomCta(),
+    // y=2286): кнопка приклеена сразу под полем ввода телефона, а не к нижнему краю экрана,
+    // ниже неё пустое место. Подтверждено вживую 2026-08-29 (первый реальный прогон гостевого
+    // логина после снятия ограничения на OTP-автоматизацию, см. [[tezchakana-login-preference]]):
+    // tapBottomCta() промахивался мимо кнопки, "Davom etish" не срабатывал. Позиция не зависит
+    // от видимости клавиатуры (сверена на снимках с открытой и закрытой клавиатурой - идентична).
+    private static final int PHONE_CONTINUE_REF_X = 540;
+    private static final int PHONE_CONTINUE_REF_Y = 1419;
+
     public LoginScreen(AndroidDriver driver) {
         super(driver);
     }
@@ -53,7 +62,7 @@ public class LoginScreen extends BaseScreen {
     public OtpScreen submitPhoneNumber(String phoneDigits) {
         waitFor(PHONE_INPUT_FIELD).sendKeys(phoneDigits);
         waitFor(CONTINUE_BUTTON);
-        tapBottomCta();
+        tapAt(scaledX(PHONE_CONTINUE_REF_X), scaledY(PHONE_CONTINUE_REF_Y));
         return new OtpScreen(driver);
     }
 }

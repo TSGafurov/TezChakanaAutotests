@@ -4,7 +4,7 @@ import com.tezchakana.screens.HomeScreen;
 import org.testng.annotations.Test;
 
 /**
- * "Buyurtmalar": ORDH-01, ORDH-03 (см. docs/exploration-notes.md).
+ * "Buyurtmalar": ORDH-01, ORDH-02, ORDH-03 (см. docs/exploration-notes.md).
  *
  * Рассчитан на авторизованный старт (см. ProfileAuthorizedTest).
  */
@@ -25,5 +25,14 @@ public class OrdersTest extends BaseTest {
                 .openOrders()
                 .openFirstOrder()
                 .verifyCancelDialogOpensAndDismiss();
+    }
+
+    @Test
+    public void orderDetailsShowConsistentOrderInfo() {
+        new HomeScreen(driver)
+                .openProfileTab()
+                .openOrders()
+                .openFirstOrder()
+                .verifyOrderDetailsShowConsistentInfo();
     }
 }

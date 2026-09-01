@@ -21,6 +21,22 @@ public class PaymentScreen extends BaseScreen {
     private static final By ORDER_SUCCESS_INDICATOR =
             AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Buyurtma qabul qilindi\")");
 
+    // ORD-02: экран ошибки оплаты ("Xato\nTo'lovda xatolik yuz berdi\ndio_error:
+    // connection_error\nBosh sahifa\nQayta urinib ko'ring") - тот же смерженный на весь
+    // экран паттерн, что и остальные диалоги/CTA в приложении. Захвачено вживую
+    // 2026-08-29 (`ScratchExploreOrd02`, network отключалась через adb прямо перед
+    // placeOrder(), см. Known issue 1 в docs/exploration-notes.md) - дамп дерева
+    // показал, что "Bosh sahifa" и "Qayta urinib ko'ring" НЕ имеют своих отдельных
+    // кликабельных узлов (только родительский full-screen non-clickable контейнер и
+    // отдельная кнопка "X" закрытия с bounds [933,89][1080,236]) - обе кнопки доступны
+    // только тапом по координатам, как и везде в этом приложении для такого паттерна.
+    private static final By ORDER_ERROR_INDICATOR =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"To'lovda xatolik yuz berdi\")");
+    private static final int ORDER_ERROR_GO_HOME_REF_X = 283;
+    private static final int ORDER_ERROR_GO_HOME_REF_Y = 2136;
+    private static final int ORDER_ERROR_RETRY_REF_X = 796;
+    private static final int ORDER_ERROR_RETRY_REF_Y = 2136;
+
     // CHK-03: заголовок и строки блока "Yetkazib berish tafsilotlari" - каждая строка
     // смерженный узел (заголовок+значение), как и везде в приложении.
     private static final By DELIVERY_DETAILS_HEADER = AppiumBy.accessibilityId("Yetkazib berish tafsilotlari");
@@ -84,5 +100,35 @@ public class PaymentScreen extends BaseScreen {
     public void verifyOrderSuccess() {
         WebElement successElement = waitFor(ORDER_SUCCESS_INDICATOR);
         Assert.assertTrue(successElement.isDisplayed(), "Экран подтверждения заказа не отобразился");
+    }
+
+    // ORD-02: проверяет полноэкранный error-state после неудачной попытки оформления
+    // заказа (см. ORDER_ERROR_INDICATOR выше).
+    public PaymentScreen verifyOrderErrorShown() {
+        Assert.assertTrue(waitFor(ORDER_ERROR_INDICATOR).isDisplayed(),
+                "Экран ошибки оплаты (\"To'lovda xatolik yuz berdi\") не отобразился");
+        return this;
+    }
+
+    public HomeScreen goHomeFromOrderError() {
+        tapAt(scaledX(ORDER_ERROR_GO_HOME_REF_X), scaledY(ORDER_ERROR_GO_HOME_REF_Y));
+        return new HomeScreen(driver);
+    }
+
+    // ORD-04: с отключённой сетью повторная попытка проваливается с ТЕМ ЖЕ самым
+    // текстом ошибки, что и исходная - визуально неотличимо от "кнопка вообще ничего не
+    // делает". Проверено вживую 2026-08-29 двумя разными способами, и оба ничего не
+    // доказывают: (1) content-desc узла ошибки не исчезает даже на мгновение между
+    // попытками; (2) WebElement, снятый ДО тапа, не становится stale после - но для
+    // Flutter это ожидаемо для ЛЮБОГО setState-ребилда (element/semantics-дерево
+    // намеренно сохраняет identity неизменных поддеревьев), а не признак того, что
+    // ничего не произошло. Технически надёжного способа доказать, что тап запустил
+    // именно НОВЫЙ сетевой запрос, а не просто пришёлся мимо, в этом приложении нет -
+    // здесь только тап по координате и возврат на этот же экран; caller (см. ORD-04 в
+    // exploration-notes.md) сам проверяет, что экран ошибки после тапа по-прежнему в
+    // штатном, не сломанном состоянии.
+    public PaymentScreen retryOrderFromError() {
+        tapAt(scaledX(ORDER_ERROR_RETRY_REF_X), scaledY(ORDER_ERROR_RETRY_REF_Y));
+        return this;
     }
 }

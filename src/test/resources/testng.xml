@@ -56,6 +56,19 @@
             <class name="com.tezchakana.tests.SettingsTest"/>
         </classes>
     </test>
+    <test name="Language Switch">
+        <classes>
+            <!-- Изменяет язык интерфейса реального аккаунта туда-обратно (см. javadoc
+                 класса) - отдельный <test>, не внутри "Settings", чтобы явно видеть в
+                 отчёте, если finally-возврат на узбекский не отработал. -->
+            <class name="com.tezchakana.tests.LanguageSwitchTest"/>
+        </classes>
+    </test>
+    <test name="Product Card Quantity">
+        <classes>
+            <class name="com.tezchakana.tests.ProductCardQuantityTest"/>
+        </classes>
+    </test>
     <test name="Cards">
         <classes>
             <class name="com.tezchakana.tests.CardsTest"/>
@@ -66,6 +79,21 @@
             <class name="com.tezchakana.tests.OrdersTest"/>
         </classes>
     </test>
+    <!-- OrderErrorTest/OrderRetryTest ВРЕМЕННО ИСКЛЮЧЕНЫ из сьюта 2026-08-31: обнаружено
+         вживую, что оба теста могут оставлять РЕАЛЬНЫЕ подтверждённые заказы
+         (TEZ00167/TEZ00168/TEZ00169 - 3 штуки за день, отменены через приложение)
+         несмотря на то, что `verifyOrderErrorShown()` корректно видел экран ошибки в
+         момент проверки. Первая попытка починки (`BaseTest.toggleNetwork()` теперь ждёт
+         физического подтверждения через /proc/net/route) устранила один реальный race,
+         но TEZ00169 создался УЖЕ ПОСЛЕ этого фикса - похоже, это эмулятор, и
+         `svc wifi/data disable` не обрывает уже открытое keep-alive HTTP-соединение,
+         только блокирует НОВЫЕ (см. разбор ORD-02 в docs/exploration-notes.md). Оба
+         теста теперь также сверяют список заказов до/после (`OrdersScreen.
+         topOrderNumber()`) и падают ГРОМКО, если заказ всё-таки появился - это
+         сработало (поймало TEZ00169), но не заменяет надёжной блокировки сети. Не
+         включать обратно, пока не реализована пакетная блокировка (`iptables`/аналог)
+         конкретного хоста бэкенда, либо без явного согласия владельца на риск ещё
+         одного реального заказа за попытку. -->
     <test name="Address Coverage">
         <classes>
             <!-- Не идемпотентен - каждый прогон добавляет в адресную книгу ещё один

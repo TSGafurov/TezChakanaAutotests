@@ -43,4 +43,16 @@ public class OrdersScreen extends BaseScreen {
         waitFor(ORDER_CARD).click();
         return new OrderDetailsScreen(driver);
     }
+
+    // Самый свежий заказ - первая карточка во вкладке "Faol" (новые заказы реального
+    // аккаунта появляются сверху списка, подтверждено вживую). Используется как
+    // сигнатура "ничего нового не появилось" в OrderErrorTest/OrderRetryTest -
+    // см. комментарий про ORD-02/ORD-04 в docs/exploration-notes.md о том, почему
+    // одного лишь ассерта на error-state на экране оплаты недостаточно, чтобы доверять,
+    // что реальный заказ не был создан.
+    public String topOrderNumber() {
+        String cardText = waitFor(ORDER_CARD).getAttribute("content-desc");
+        String[] lines = cardText.split("\n");
+        return lines.length > 1 ? lines[1].trim() : cardText;
+    }
 }

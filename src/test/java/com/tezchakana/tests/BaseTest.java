@@ -15,6 +15,10 @@ import java.time.Duration;
 
 public class BaseTest {
 
+    // Используется OrderErrorTest/OrderRetryTest для детерминированного отключения сети
+    // перед оформлением заказа (см. toggleNetwork() ниже).
+    protected static final String ADB_DEVICE = "emulator-5554";
+
     protected AndroidDriver driver;
 
     @BeforeMethod
@@ -76,6 +80,50 @@ public class BaseTest {
         } catch (IOException | URISyntaxException e) {
             return false;
         }
+    }
+
+    // 2026-08-31: раньше `toggleNetwork(false)` (дублировался в OrderErrorTest и
+    // OrderRetryTest) просто запускал `svc wifi/data disable` и СРАЗУ ЖЕ возвращался,
+    // не дожидаясь, пока устройство реально применит отключение - живая проверка
+    // показала, что между моментом, когда adb-команда возвращает управление, и
+    // моментом, когда `/proc/net/route` на устройстве реально пустеет (сеть физически
+    // недостижима - `ping` отдаёт "Network is unreachable", а не таймаут), проходит
+    // до ~1 секунды. Тест, тапавший "Buyurtma qilish" сразу после вызова adb-команды
+    // без этой задержки, дважды оставил РЕАЛЬНЫЕ подтверждённые заказы (TEZ00167/
+    // TEZ00168, см. ORD-02/ORD-04 в docs/exploration-notes.md) - похоже, тап и запрос
+    // на оформление успевали проскочить именно в это окно до фактического отключения.
+    // Теперь метод явно ждёт подтверждения нужного состояния сети через опрос
+    // `/proc/net/route`, а не полагается на то, что adb-команда вернулась.
+    protected void toggleNetwork(boolean enabled) throws IOException, InterruptedException {
+        String state = enabled ? "enable" : "disable";
+        new ProcessBuilder("adb", "-s", ADB_DEVICE, "shell", "svc", "wifi", state).start().waitFor();
+        new ProcessBuilder("adb", "-s", ADB_DEVICE, "shell", "svc", "data", state).start().waitFor();
+        waitForNetworkState(enabled);
+    }
+
+    private void waitForNetworkState(boolean expectedUp) throws IOException, InterruptedException {
+        long deadlineMillis = System.currentTimeMillis() + 10_000;
+        while (System.currentTimeMillis() < deadlineMillis) {
+            if (isNetworkReachable() == expectedUp) {
+                return;
+            }
+            Thread.sleep(200);
+        }
+        throw new IllegalStateException("Сеть не подтвердила ожидаемое состояние ("
+                + (expectedUp ? "включена" : "отключена") + ") за 10с через /proc/net/route - "
+                + "дальнейшие шаги, зависящие от состояния сети (в т.ч. оформление заказа), "
+                + "небезопасно продолжать");
+    }
+
+    // Пустая таблица маршрутизации (только заголовок, ни одной реальной строки) -
+    // надёжный признак того, что сеть отключена физически, а не только "выглядит
+    // отключённой" на уровне ConnectivityManager (та же проверка, что подтвердила
+    // проблему вживую - см. toggleNetwork() выше).
+    private boolean isNetworkReachable() throws IOException, InterruptedException {
+        Process process = new ProcessBuilder("adb", "-s", ADB_DEVICE, "shell", "cat", "/proc/net/route").start();
+        process.waitFor();
+        String output = new String(process.getInputStream().readAllBytes());
+        return output.lines().count() > 1;
     }
 
 }

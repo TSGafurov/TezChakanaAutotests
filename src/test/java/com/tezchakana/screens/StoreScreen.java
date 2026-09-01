@@ -27,6 +27,20 @@ public class StoreScreen extends BaseScreen {
         super(driver);
     }
 
+    // STORE-02: подтверждает, что тап по категории реально открыл сетку товаров, а не
+    // остался на месте (например, из-за не до конца завершившегося скролла, см. issue 6 в
+    // exploration-notes.md) - не завязан на конкретный товар внутри категории. Пропажа
+    // из дерева самой плитки категории (первая идея) оказалась ненадёжной: для коротких
+    // названий ("Suv") тот же текст повторно используется как заголовок секции внутри
+    // открывшейся сетки товаров и никогда не пропадает (проверено вживую 2026-08-29,
+    // CheckoutFlowTest завис по таймауту, хотя переход фактически произошёл). Вместо
+    // этого ждём появления любой карточки товара с ценой ("<сумма> so'm") - общий
+    // признак сетки товаров для любой категории. Исключаем "mahsulot" в тексте, чтобы не
+    // словить нижний бар суммы корзины (CART_SUMMARY_BAR), который тоже содержит "so'm"
+    // и уже может быть виден, если в корзине что-то осталось с прошлого теста.
+    private static final By PRODUCT_GRID_LOADED_INDICATOR = AppiumBy.androidUIAutomator(
+            "new UiSelector().descriptionMatches(\"(?s)(?!.*mahsulot).*so'm.*\")");
+
     public StoreScreen scrollToCategory(String categoryLabel) {
         By categoryTile = AppiumBy.accessibilityId(categoryLabel);
         List<WebElement> found = driver.findElements(categoryTile);
@@ -39,6 +53,7 @@ public class StoreScreen extends BaseScreen {
             throw new IllegalStateException("Категория \"" + categoryLabel + "\" не найдена после прокрутки списка категорий магазина");
         }
         found.get(0).click();
+        waitFor(PRODUCT_GRID_LOADED_INDICATOR);
         return this;
     }
 
@@ -66,8 +81,45 @@ public class StoreScreen extends BaseScreen {
         return this;
     }
 
+    // STORE-04: тот же карточный степпер, что и addProductToCart() выше ("+"/"-" внутри
+    // карточки товара В СЕТКЕ категории, до открытия корзины) - "-" появляется на месте
+    // "+", а сам "+" сдвигается влево, когда количество становится > 0 (карточка
+    // превращается в полноширинный степпер "- N +"). Позиция "-" снята вживую 2026-08-29
+    // с той же карточки ("Категория Вода.xml"-эквивалент для "Bozorlik"): фракция 0.504
+    // по ширине карточки (в отличие от 0.883 у "+" - "-" не в самом левом углу степпера,
+    // а ближе к его геометрическому центру, судя по снимку). Высота (0.098) та же, что у
+    // "+" - оба симметричны по вертикали в одной полосе степпера.
+    public StoreScreen decreaseQuantityOnCard(String productDescriptionContains) {
+        By productCardLocator = AppiumBy.androidUIAutomator(
+                "new UiSelector().descriptionContains(\"" + productDescriptionContains + "\")");
+        WebElement productCard = waitFor(productCardLocator);
+        var cardRect = productCard.getRect();
+        int tapX = cardRect.getX() + (int) Math.round(cardRect.getWidth() * 0.504);
+        int tapY = cardRect.getY() + (int) Math.round(cardRect.getHeight() * 0.098);
+        tapAt(tapX, tapY);
+        return this;
+    }
+
+    // STORE-04: content-desc карточки - "<цена> so'm\n<название>" без количества, пока
+    // товара нет в корзине, и "<цена> so'm\n<название>\n<N>" после первого "+" (см.
+    // комментарий в addProductToCart() выше про формат количества).
+    public String getProductCardText(String productDescriptionContains) {
+        By productCardLocator = AppiumBy.androidUIAutomator(
+                "new UiSelector().descriptionContains(\"" + productDescriptionContains + "\")");
+        return waitFor(productCardLocator).getAttribute("content-desc");
+    }
+
+    // Обнаружено 2026-08-29 при накопленном количестве товара (5x после нескольких
+    // прогонов подряд без очистки корзины, noReset(true)): узел бара помечен
+    // scrollable="true" в дереве доступности, и в этом состоянии Appium-`click()` по
+    // найденному элементу перестаёт открывать шторку корзины (сама шторка при этом
+    // открывается штатно по тому же координатному центру через обычный тап - проверено
+    // вживую и через adb, и через `tapAt`). Тап по координатам центра элемента вместо
+    // `.click()` - тот же обходной путь, что и везде в проекте для проблемных merged/
+    // scrollable-узлов (см. addProductToCart() выше).
     public CartScreen openCartSummaryBar() {
-        waitFor(CART_SUMMARY_BAR).click();
+        var rect = waitFor(CART_SUMMARY_BAR).getRect();
+        tapAt(rect.getX() + rect.getWidth() / 2, rect.getY() + rect.getHeight() / 2);
         return new CartScreen(driver);
     }
 

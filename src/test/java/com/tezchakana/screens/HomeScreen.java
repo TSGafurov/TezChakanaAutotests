@@ -61,10 +61,8 @@ public class HomeScreen extends BaseScreen {
     // предположение "только первый запуск"). "Ha, men shu yerdaman" - смерженный узел
     // clickable=false с реальными (не на весь экран) bounds - тап по координатам
     // центра, как и с другими такими узлами в приложении.
-    private static final By STARTUP_ADDRESS_DIALOG = AppiumBy.accessibilityId("Shu manzilga buyurtma berilsinmi?");
-    private static final By STARTUP_CONFIRM_ADDRESS_BUTTON = AppiumBy.accessibilityId("Ha, men shu yerdaman");
-    private static final int STARTUP_CONFIRM_ADDRESS_REF_X = 540;
-    private static final int STARTUP_CONFIRM_ADDRESS_REF_Y = 2069;
+    // STARTUP_ADDRESS_DIALOG и координаты кнопки подтверждения унаследованы от
+    // BaseScreen (см. SYS-01) - раньше были продублированы здесь же.
     private static final By STARTUP_CHANGE_ADDRESS_BUTTON = AppiumBy.accessibilityId("Manzilni o'zgartirish");
 
     // "Location Accuracy" - системный диалог Google Play services (пакет
@@ -281,7 +279,7 @@ public class HomeScreen extends BaseScreen {
     }
 
     public HomeScreen confirmStartupAddress() {
-        tapAt(scaledX(STARTUP_CONFIRM_ADDRESS_REF_X), scaledY(STARTUP_CONFIRM_ADDRESS_REF_Y));
+        tapStartupAddressConfirm();
         return this;
     }
 
@@ -361,7 +359,7 @@ public class HomeScreen extends BaseScreen {
             if (!TestConfig.appPackage().equals(driver.getCurrentPackage())) {
                 driver.activateApp(TestConfig.appPackage());
             } else if (!driver.findElements(STARTUP_ADDRESS_DIALOG).isEmpty()) {
-                tapAt(scaledX(STARTUP_CONFIRM_ADDRESS_REF_X), scaledY(STARTUP_CONFIRM_ADDRESS_REF_Y));
+                tapStartupAddressConfirm();
             } else if (dangerousCtaVisible) {
                 driver.navigate().back();
             } else {

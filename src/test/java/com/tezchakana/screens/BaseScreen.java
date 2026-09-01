@@ -75,7 +75,12 @@ public abstract class BaseScreen {
     // реальными (не на весь экран) bounds, тап по координате центра, как и везде для
     // таких узлов; подтверждает уже активный адрес, ничего не меняет (тот же
     // безопасный тап, что уже используется в HomeScreen.confirmStartupAddress()).
-    private static final By STARTUP_ADDRESS_DIALOG = AppiumBy.accessibilityId("Shu manzilga buyurtma berilsinmi?");
+    // SYS-01: раньше этот локатор и координаты были ЕЩЁ РАЗ независимо продублированы в
+    // HomeScreen (используются там и для ONB-04, и внутри returnToHomeScreen()) - тот же
+    // класс дублирования копий координат, который SYS-01 просит устранить. Здесь -
+    // единственное определение, HomeScreen обращается к унаследованным
+    // protected-членам вместо своей копии.
+    protected static final By STARTUP_ADDRESS_DIALOG = AppiumBy.accessibilityId("Shu manzilga buyurtma berilsinmi?");
     private static final int STARTUP_CONFIRM_ADDRESS_REF_X = 540;
     private static final int STARTUP_CONFIRM_ADDRESS_REF_Y = 2069;
 
@@ -105,8 +110,15 @@ public abstract class BaseScreen {
 
     private void dismissStartupAddressDialogIfPresent() {
         if (!driver.findElements(STARTUP_ADDRESS_DIALOG).isEmpty()) {
-            tapAt(scaledX(STARTUP_CONFIRM_ADDRESS_REF_X), scaledY(STARTUP_CONFIRM_ADDRESS_REF_Y));
+            tapStartupAddressConfirm();
         }
+    }
+
+    // Тап по "Ha, men shu yerdaman" на диалоге подтверждения адреса - вынесено сюда,
+    // чтобы HomeScreen (ONB-04, returnToHomeScreen()) не держал свою копию тех же
+    // координат (см. SYS-01 в docs/exploration-notes.md).
+    protected void tapStartupAddressConfirm() {
+        tapAt(scaledX(STARTUP_CONFIRM_ADDRESS_REF_X), scaledY(STARTUP_CONFIRM_ADDRESS_REF_Y));
     }
 
     // 2026-08-28, воспроизведено вживую: закрытие диалога (например, "Yo'q" в
