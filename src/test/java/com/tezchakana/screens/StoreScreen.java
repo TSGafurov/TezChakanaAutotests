@@ -129,4 +129,12 @@ public class StoreScreen extends BaseScreen {
     public String getCartSummaryBarText() {
         return waitFor(CART_SUMMARY_BAR).getAttribute("content-desc");
     }
+
+    // Небольшая (не waitFor) проверка присутствия - нужна тестам, которым важно
+    // абсолютное количество товаров в корзине, а не относительное изменение
+    // (NoReset(true) делит реальную корзину между всеми тестами класса, см.
+    // StoreAndCartTest.addingRecommendedItemUpdatesCartSummary).
+    public boolean hasItemsInCart() {
+        return !driver.findElements(CART_SUMMARY_BAR).isEmpty();
+    }
 }

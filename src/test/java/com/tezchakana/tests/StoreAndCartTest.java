@@ -76,8 +76,24 @@ public class StoreAndCartTest extends BaseTest {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()
                 .openStore(TestConfig.storeName());
-
         storeScreen.scrollToCategory(TestConfig.groceryCategoryLabel());
+
+        // Этот тест проверяет абсолютное "2 mahsulot", а не изменение относительно
+        // стартового количества (как, например, ProductCardQuantityTest.quantityOf()) -
+        // поэтому должен стартовать с гарантированно пустой корзины. NoReset(true) делит
+        // реальную корзину между всеми тестами класса: increasingQuantityRecalculatesTotal
+        // выше по файлу добавляет товар и увеличивает количество до 2, ничего не очищая -
+        // без этой проверки тест детерминированно падает, если TestNG выполнил его после
+        // increasingQuantityRecalculatesTotal - воспроизведено вживую 2026-09-02, см.
+        // Known issue 18 в docs/exploration-notes.md.
+        if (storeScreen.hasItemsInCart()) {
+            storeScreen.openCartSummaryBar().clearCart();
+            storeScreen = new HomeScreen(driver)
+                    .openBazarTab()
+                    .openStore(TestConfig.storeName());
+            storeScreen.scrollToCategory(TestConfig.groceryCategoryLabel());
+        }
+
         storeScreen.addProductToCart(TestConfig.groceryProductName());
 
         CartScreen cartScreen = storeScreen.openCartSummaryBar();
