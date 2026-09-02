@@ -16,6 +16,12 @@
         <java.client.version>10.1.1</java.client.version>
         <testng.version>7.10.2</testng.version>
         <logback.version>1.5.6</logback.version>
+        <!-- Дефолт для surefire ниже - переопределяется флагом -DsuiteXmlFile=...
+             (см. README.md/docs/exploration-notes.md про testng-safe.xml). Без
+             биндинга через ${suiteXmlFile} здесь -D с командной строки молча
+             игнорировался бы - Maven не подставляет системные свойства в конфиг
+             плагина сам по себе, только через явный placeholder. -->
+        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
     </properties>
 
     <dependencies>
@@ -54,7 +60,7 @@
                 <version>3.2.5</version>
                 <configuration>
                     <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+                        <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
                     </suiteXmlFiles>
                 </configuration>
             </plugin>
