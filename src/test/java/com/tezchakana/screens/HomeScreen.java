@@ -326,6 +326,43 @@ public class HomeScreen extends BaseScreen {
     // project_accidental_address_duplication_incident в памяти проекта.
     private static final By DANGEROUS_FULLSCREEN_ADD_ADDRESS_CTA = AppiumBy.accessibilityId("Manzil qo'shish");
 
+    // Sozlamalar - обнаружено вживую 2026-09-02 на первом реальном прогоне
+    // testng-safe.xml: все 4 safe-метода SettingsTest заканчиваются НА этом экране (ни
+    // один не уходит с него сам), а у него нет ни нижней навигации, ни известной
+    // опасной CTA - returnToHomeScreen() тратил все 8 попыток впустую (тап по координате
+    // Home-вкладки бил в пустое место экрана), проваливая КАЖДЫЙ следующий тест в прогоне
+    // (CardsTest/OrdersTest×3/NotificationsTest - всё, что в testng-safe.xml идёт после
+    // Settings). Системный back() здесь, по уже задокументированному опыту (см. основной
+    // комментарий у returnToHomeScreen() ниже про Sozlamalar/Profile-root/
+    // OrderDetailsScreen), закрывает всё приложение - но тап именно по САМОЙ иконке
+    // AppBar (не системная кнопка back, а конкретный ImageView-узел в левом верхнем углу)
+    // проверен вживую через appium-mcp и корректно возвращает на Profile с нижней
+    // навигацией. Маркер экрана - версия приложения ("V 1.1.8 (...)"), тот же локатор,
+    // что и SettingsScreen.VERSION_TEXT (не вынесен в общее место - тот же случай, что и
+    // DANGEROUS_FULLSCREEN_*/SAVE_CTA выше: узкий, специфичный для recovery-логики маркер,
+    // не общий переиспользуемый локатор экрана, см. разбор SYS-01 в exploration-notes.md).
+    private static final By SETTINGS_SCREEN_MARKER =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionStartsWith(\"V \")");
+
+    // Buyurtmalar (список заказов) - тот же класс экрана, что и Sozlamalar выше: нет
+    // нижней навигации, back() закрывает всё приложение (см. комментарий OrderErrorTest
+    // про "OrdersScreen - пушнутый экран без нижней навигации" и SYS-07 в
+    // exploration-notes.md, где сюда же упирался прогон testng-safe.xml). Проверено
+    // вживую 2026-09-02 тем же способом, что и для Sozlamalar - тап по иконке AppBar в
+    // левом верхнем углу (те же координаты, тот же физический элемент интерфейса)
+    // корректно возвращает на Profile. Маркер экрана - вкладка "Tugallangan", тот же
+    // локатор, что и OrdersScreen.COMPLETED_TAB (узкий дубль по тем же причинам, что и
+    // SETTINGS_SCREEN_MARKER выше).
+    private static final By ORDERS_SCREEN_MARKER =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Tugallangan\")");
+
+    // Общая координата иконки-стрелки AppBar в левом верхнем углу - один и тот же
+    // физический элемент на Sozlamalar и Buyurtmalar (и, вероятно, на других подобных
+    // "пушнутых" экранах без нижней навигации), поэтому не дублируется отдельно под
+    // каждый маркер.
+    private static final int APPBAR_BACK_ARROW_REF_X = 73;
+    private static final int APPBAR_BACK_ARROW_REF_Y = 135;
+
     // 2026-08-28, воспроизведено вживую, несколько итераций подряд:
     //
     // 1) Первая версия тапала по координате Home-вкладки повторно (как и в
@@ -360,6 +397,9 @@ public class HomeScreen extends BaseScreen {
                 driver.activateApp(TestConfig.appPackage());
             } else if (!driver.findElements(STARTUP_ADDRESS_DIALOG).isEmpty()) {
                 tapStartupAddressConfirm();
+            } else if (!driver.findElements(SETTINGS_SCREEN_MARKER).isEmpty()
+                    || !driver.findElements(ORDERS_SCREEN_MARKER).isEmpty()) {
+                tapAt(scaledX(APPBAR_BACK_ARROW_REF_X), scaledY(APPBAR_BACK_ARROW_REF_Y));
             } else if (dangerousCtaVisible) {
                 driver.navigate().back();
             } else {
