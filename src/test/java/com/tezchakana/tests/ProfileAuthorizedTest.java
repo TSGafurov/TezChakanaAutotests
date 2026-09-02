@@ -16,21 +16,21 @@ import org.testng.annotations.Test;
  */
 public class ProfileAuthorizedTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void authorizedProfileShowsNameAndCounters() {
         new HomeScreen(driver)
                 .openProfileTab()
                 .verifyAuthorizedStateShown();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void favoritesListOpensFromProfile() {
         new HomeScreen(driver)
                 .openProfileTab()
                 .verifyFavoritesListShown();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void cancellingLogoutKeepsSessionAuthorized() {
         new HomeScreen(driver)
                 .openProfileTab()

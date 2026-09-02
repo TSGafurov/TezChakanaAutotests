@@ -49,14 +49,14 @@ public class ProfileGuestTest extends BaseTest {
         }
     }
 
-    @Test
+    @Test(groups = "mutating")
     public void guestProfileShowsPlaceholderAndKirish() {
         new HomeScreen(driver)
                 .openProfileTab()
                 .verifyGuestStateShown();
     }
 
-    @Test
+    @Test(groups = "mutating")
     public void kirishFromGuestProfileOpensLoginFlow() {
         new HomeScreen(driver)
                 .openProfileTab()

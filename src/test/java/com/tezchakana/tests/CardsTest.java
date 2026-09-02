@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  */
 public class CardsTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void cardsListIsShown() {
         new HomeScreen(driver)
                 .openProfileTab()

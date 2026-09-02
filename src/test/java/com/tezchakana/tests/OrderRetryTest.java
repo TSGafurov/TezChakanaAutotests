@@ -33,7 +33,7 @@ import java.io.IOException;
  */
 public class OrderRetryTest extends BaseTest {
 
-    @Test
+    @Test(groups = "destructive")
     public void retryButtonReattemptsPlaceOrder() throws InterruptedException, IOException {
         String topOrderBefore = new HomeScreen(driver).openProfileTab().openOrders().topOrderNumber();
         // См. идентичный комментарий в OrderErrorTest - OrdersScreen без нижней

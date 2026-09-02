@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+     Полный регресс: все подключённые ниже классы, без фильтра по группам - как "safe", так
+     и "mutating" тесты (см. group на @Test аннотациях каждого метода). "destructive"
+     (OrderErrorTest/OrderRetryTest) сюда намеренно не подключены - см. комментарий про
+     утечку реальных заказов ниже. Для автоматического CI-safe подмножества (только "safe",
+     без мутации реального аккаунта) см. testng-safe.xml:
+       mvn test -DsuiteXmlFile=src/test/resources/testng-safe.xml
+-->
 <suite name="TezChakana Suite" verbose="1">
     <test name="Checkout Flow">
         <classes>

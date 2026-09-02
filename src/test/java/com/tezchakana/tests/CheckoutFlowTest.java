@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  */
 public class CheckoutFlowTest extends BaseTest {
 
-    @Test
+    @Test(groups = "mutating")
     public void completeCheckoutWithCashOnDelivery() {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()

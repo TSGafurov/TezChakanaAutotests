@@ -36,7 +36,7 @@ public class LanguageSwitchTest extends BaseTest {
     // виден независимо от содержимого корзины - надёжнее.
     private static final By HAMMASI_CHIP_RUSSIAN = AppiumBy.accessibilityId("Все");
 
-    @Test
+    @Test(groups = "mutating")
     public void switchingToRussianPersistsAcrossRevisitAndRevertsCleanly() {
         ProfileScreen profile = new HomeScreen(driver).openProfileTab();
         SettingsScreen settings = profile.openSettings();

@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  */
 public class AddressCoverageTest extends BaseTest {
 
-    @Test
+    @Test(groups = "mutating")
     public void storesShowOnlyForAddressesWithDeliveryCoverage() {
         // Chust - известный рабочий адрес, есть покрытие доставки.
         new HomeScreen(driver)

@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  */
 public class SettingsTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void settingsScreenShowsAllRows() {
         new HomeScreen(driver)
                 .openProfileTab()
@@ -21,7 +21,7 @@ public class SettingsTest extends BaseTest {
                 .verifyScreenShown();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void languagePickerShowsCurrentAndOptions() {
         new HomeScreen(driver)
                 .openProfileTab()
@@ -29,7 +29,7 @@ public class SettingsTest extends BaseTest {
                 .verifyLanguagePickerShowsOptions();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void faqOpensInApp() {
         new HomeScreen(driver)
                 .openProfileTab()
@@ -37,7 +37,7 @@ public class SettingsTest extends BaseTest {
                 .verifyFaqOpensInApp();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void privacyPolicyOpensInApp() {
         new HomeScreen(driver)
                 .openProfileTab()
@@ -45,7 +45,7 @@ public class SettingsTest extends BaseTest {
                 .verifyPrivacyPolicyOpensInApp();
     }
 
-    @Test
+    @Test(groups = "mutating")
     public void notificationsToggleEnablesDirectlyAndDisablesWithConfirmation() {
         new HomeScreen(driver)
                 .openProfileTab()

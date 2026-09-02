@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
  */
 public class CheckoutDetailsTest extends BaseTest {
 
-    @Test
+    @Test(groups = "mutating")
     public void checkoutScreenShowsDeliveryDetailsAndReflectsPaymentSelection() {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()

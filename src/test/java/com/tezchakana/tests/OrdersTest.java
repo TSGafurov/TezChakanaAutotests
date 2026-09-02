@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  */
 public class OrdersTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void ordersListIsShown() {
         new HomeScreen(driver)
                 .openProfileTab()
@@ -18,7 +18,7 @@ public class OrdersTest extends BaseTest {
                 .verifyOrdersShown();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void cancelIconOpensDialogWithoutCancellingOrder() {
         new HomeScreen(driver)
                 .openProfileTab()
@@ -27,7 +27,7 @@ public class OrdersTest extends BaseTest {
                 .verifyCancelDialogOpensAndDismiss();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void orderDetailsShowConsistentOrderInfo() {
         new HomeScreen(driver)
                 .openProfileTab()

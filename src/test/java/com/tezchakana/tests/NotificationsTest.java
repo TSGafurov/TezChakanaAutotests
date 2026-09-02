@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  */
 public class NotificationsTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void notificationsListIsShown() {
         new HomeScreen(driver)
                 .openProfileTab()

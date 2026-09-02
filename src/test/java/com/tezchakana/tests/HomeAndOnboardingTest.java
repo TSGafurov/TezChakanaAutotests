@@ -24,32 +24,32 @@ import org.testng.annotations.Test;
  */
 public class HomeAndOnboardingTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void homeScreenLoadsWithChipsAndStoreList() {
         new HomeScreen(driver).verifyHomeLoaded();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void hammasiChipRendersStoreListAfterAnotherChip() {
         new HomeScreen(driver).verifyHammasiRendersListAfterAnotherChip();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void tappingChipFiltersStoreList() {
         new HomeScreen(driver).verifyChipFiltersStoreList();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void favoritesIconOpensFavoritesScreen() {
         new HomeScreen(driver).verifyFavoritesIconOpensFavoritesScreen();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void storeListScrollRevealsMoreStores() {
         new HomeScreen(driver).verifyStoreListScrollRevealsMoreStores();
     }
 
-    @Test
+    @Test(groups = "mutating")
     public void changingAddressAffectsStoreList() {
         HomeScreen homeScreen = new HomeScreen(driver);
 
@@ -64,7 +64,7 @@ public class HomeAndOnboardingTest extends BaseTest {
 
     // ONB-04: перезапуск процесса приложения (не сессии Appium) заново показывает
     // диалог подтверждения адреса - воспроизводится не только на первом запуске.
-    @Test
+    @Test(groups = "safe")
     public void restartingAppShowsAddressConfirmationDialogWithChangeOption() {
         driver.terminateApp(TestConfig.appPackage());
         driver.activateApp(TestConfig.appPackage());

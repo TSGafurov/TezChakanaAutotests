@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+     CI-safe subset: read-only тесты, которые не мутируют реальный аккаунт/заказы/корзину -
+     см. group "safe" на @Test аннотациях (SYS-04 доработка, docs/exploration-notes.md).
+     Группа "safe" отфильтровывает методы даже внутри частично-безопасных классов
+     (HomeAndOnboardingTest, SettingsTest) - методы из групп "mutating"/"destructive" в этих
+     же классах просто не запускаются. Классы, где ВСЕ методы мутируют реальный аккаунт
+     (StoreAndCartTest, CheckoutFlowTest/Details, LanguageSwitchTest, ProductCardQuantityTest,
+     AddressCoverageTest, ProfileGuestTest), сюда не включены - в safe-группе у них не осталось
+     бы ни одного метода. OrderErrorTest/OrderRetryTest ("destructive") не подключены нигде -
+     см. testng.xml.
+
+     Запуск: mvn test -DsuiteXmlFile=src/test/resources/testng-safe.xml
+     Полный регресс (safe+mutating, вручную/с осторожностью) - обычный testng.xml/mvn test.
+-->
+<suite name="TezChakana Suite (CI-safe)" verbose="1">
+    <groups>
+        <run>
+            <include name="safe"/>
+        </run>
+    </groups>
+    <test name="Home and Onboarding (safe subset)">
+        <classes>
+            <class name="com.tezchakana.tests.HomeAndOnboardingTest"/>
+        </classes>
+    </test>
+    <test name="Profile Authorized">
+        <classes>
+            <class name="com.tezchakana.tests.ProfileAuthorizedTest"/>
+        </classes>
+    </test>
+    <test name="Details">
+        <classes>
+            <class name="com.tezchakana.tests.DetailsTest"/>
+        </classes>
+    </test>
+    <test name="Addresses">
+        <classes>
+            <class name="com.tezchakana.tests.AddressesTest"/>
+        </classes>
+    </test>
+    <test name="Settings (safe subset)">
+        <classes>
+            <class name="com.tezchakana.tests.SettingsTest"/>
+        </classes>
+    </test>
+    <test name="Cards">
+        <classes>
+            <class name="com.tezchakana.tests.CardsTest"/>
+        </classes>
+    </test>
+    <test name="Orders">
+        <classes>
+            <class name="com.tezchakana.tests.OrdersTest"/>
+        </classes>
+    </test>
+    <test name="Notifications">
+        <classes>
+            <class name="com.tezchakana.tests.NotificationsTest"/>
+        </classes>
+    </test>
+</suite>

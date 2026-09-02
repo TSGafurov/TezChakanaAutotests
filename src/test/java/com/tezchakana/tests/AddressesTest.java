@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  */
 public class AddressesTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void addressListIsShown() {
         new HomeScreen(driver)
                 .openProfileTab()
@@ -19,7 +19,7 @@ public class AddressesTest extends BaseTest {
                 .verifyAddressListShown();
     }
 
-    @Test
+    @Test(groups = "safe")
     public void tappingAddressOpensEditScreen() {
         new HomeScreen(driver)
                 .openProfileTab()

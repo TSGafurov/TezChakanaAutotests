@@ -29,7 +29,7 @@ import java.io.IOException;
  */
 public class OrderErrorTest extends BaseTest {
 
-    @Test
+    @Test(groups = "destructive")
     public void networkFailureDuringPlaceOrderShowsErrorState() throws InterruptedException, IOException {
         String topOrderBefore = new HomeScreen(driver).openProfileTab().openOrders().topOrderNumber();
         // OrdersScreen - "пушнутый" экран без нижней навигации; returnToHomeScreen()

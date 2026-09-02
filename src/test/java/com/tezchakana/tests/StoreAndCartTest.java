@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
  */
 public class StoreAndCartTest extends BaseTest {
 
-    @Test
+    @Test(groups = "mutating")
     public void addingProductUpdatesCartSummaryAndMiniCart() {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()
@@ -40,7 +40,7 @@ public class StoreAndCartTest extends BaseTest {
                 .close();
     }
 
-    @Test
+    @Test(groups = "mutating")
     public void clearCartEmptiesIt() {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()
@@ -52,7 +52,7 @@ public class StoreAndCartTest extends BaseTest {
         storeScreen.openCartSummaryBar().clearCart();
     }
 
-    @Test
+    @Test(groups = "mutating")
     public void increasingQuantityRecalculatesTotal() {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()
@@ -71,7 +71,7 @@ public class StoreAndCartTest extends BaseTest {
         cartScreen.close();
     }
 
-    @Test
+    @Test(groups = "mutating")
     public void addingRecommendedItemUpdatesCartSummary() {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()

@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
  */
 public class ProductCardQuantityTest extends BaseTest {
 
-    @Test
+    @Test(groups = "mutating")
     public void repeatedPlusMinusOnProductCardChangesQuantity() {
         StoreScreen storeScreen = new HomeScreen(driver)
                 .openBazarTab()

@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  */
 public class DetailsTest extends BaseTest {
 
-    @Test
+    @Test(groups = "safe")
     public void detailsScreenShowsNamePhoneAndSocialButtons() {
         new HomeScreen(driver)
                 .openProfileTab()
