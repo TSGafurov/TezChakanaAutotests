@@ -356,6 +356,28 @@ public class HomeScreen extends BaseScreen {
     private static final By ORDERS_SCREEN_MARKER =
             AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Tugallangan\")");
 
+    // Xabarnomalar (история пушей) - тот же класс экрана, что и оба выше, обнаружено
+    // сразу следом за ними 2026-09-02 (третий подряд экран этого паттерна). Заголовок
+    // экрана НЕ годится маркером (в отличие от Sozlamalar/Buyurtmalar) - "Xabarnomalar"
+    // как accessibility id уже занят карточкой-ссылкой на Profile (см.
+    // ProfileScreen.NOTIFICATIONS_CARD), совпадающий маркер сработал бы и на Profile,
+    // где чинить нечего и где по этим координатам ничего нет - потратил бы там все
+    // оставшиеся попытки впустую вместо перехода к дефолтному тапу по Home-вкладке,
+    // который на Profile как раз работает штатно. Вместо этого - маркер карточки
+    // уведомления (разделитель "•"), тот же локатор, что и
+    // NotificationsScreen.NOTIFICATION_ITEM: по тому же комментарию там - "•"
+    // гарантированно не встречается больше нигде на этом экране. Тап по той же
+    // AppBar-иконке (APPBAR_BACK_ARROW_REF_X/Y) проверен вживую 2026-09-02.
+    //
+    // Побочно (и корректно, не баг) тот же маркер срабатывает и на "Mening kartalarim" -
+    // строки карт там тоже содержат "•" (см. CardsScreen.CARD_ROW: "<сумма> so'm\n<банк>
+    // • <цифры>"), и это ЕЩЁ ОДИН экран того же класса без нижней навигации - тот же тап
+    // по AppBar-иконке проверен вживую и там же корректно возвращает на Profile.
+    // Отдельный маркер для него не заводится - раз "•" уже покрывает оба случая, не
+    // дублировать один и тот же смысл под разными именами (см. разбор SYS-01).
+    private static final By NOTIFICATIONS_SCREEN_MARKER =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"•\")");
+
     // Общая координата иконки-стрелки AppBar в левом верхнем углу - один и тот же
     // физический элемент на Sozlamalar и Buyurtmalar (и, вероятно, на других подобных
     // "пушнутых" экранах без нижней навигации), поэтому не дублируется отдельно под
@@ -398,7 +420,8 @@ public class HomeScreen extends BaseScreen {
             } else if (!driver.findElements(STARTUP_ADDRESS_DIALOG).isEmpty()) {
                 tapStartupAddressConfirm();
             } else if (!driver.findElements(SETTINGS_SCREEN_MARKER).isEmpty()
-                    || !driver.findElements(ORDERS_SCREEN_MARKER).isEmpty()) {
+                    || !driver.findElements(ORDERS_SCREEN_MARKER).isEmpty()
+                    || !driver.findElements(NOTIFICATIONS_SCREEN_MARKER).isEmpty()) {
                 tapAt(scaledX(APPBAR_BACK_ARROW_REF_X), scaledY(APPBAR_BACK_ARROW_REF_Y));
             } else if (dangerousCtaVisible) {
                 driver.navigate().back();
