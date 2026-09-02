@@ -25,7 +25,16 @@ public class BaseTest {
 
     protected AndroidDriver driver;
 
-    @BeforeMethod
+    // alwaysRun=true обязателен: обнаружено 2026-09-02 вживую на testng-safe.xml (см.
+    // Known issue 9 в docs/exploration-notes.md для контекста ретраев) - под групповым
+    // фильтром (<groups><run><include name="safe"/></run></groups>, см. testng-safe.xml)
+    // TestNG на повторной попытке того же @Test (после срабатывания RetryOnce) пропускает
+    // @BeforeMethod/@AfterMethod без alwaysRun=true, т.к. они сами не принадлежат группе
+    // "safe" - driver оставался null на retry, все 21 safe-теста падали с
+    // NullPointerException именно на повторной попытке. В обычном прогоне без фильтра
+    // групп (testng.xml) эта же связка retry+config работала штатно - баг проявляется
+    // только в сочетании ретрая с групповой фильтрацией.
+    @BeforeMethod(alwaysRun = true)
     public void setUp() throws Exception {
         printPreflightChecklist();
 
@@ -39,7 +48,7 @@ public class BaseTest {
         driver = new AndroidDriver(new URI(TestConfig.appiumUrl()).toURL(), options);
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
         if (driver != null) {
             driver.quit();
