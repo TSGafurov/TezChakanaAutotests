@@ -34,3 +34,6 @@ target/
 
 ### Claude Code (local, machine-specific) ###
 .claude/settings.local.json
+
+### TezChakana: реальный аккаунт/OTP - не коммитить, см. config.properties.example ###
+src/test/resources/config.properties

@@ -3,6 +3,8 @@ package com.tezchakana.tests;
 import com.tezchakana.config.TestConfig;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.options.UiAutomator2Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
@@ -14,6 +16,8 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 
 public class BaseTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BaseTest.class);
 
     // Используется OrderErrorTest/OrderRetryTest для детерминированного отключения сети
     // перед оформлением заказа (см. toggleNetwork() ниже).
@@ -46,11 +50,11 @@ public class BaseTest {
         boolean emulatorUp = isEmulatorConnected();
         boolean appiumUp = isAppiumReachable();
 
-        System.out.println("=== Preflight checklist ===");
-        System.out.println("[" + (emulatorUp ? "OK" : "FAIL") + "] Android emulator visible in `adb devices`");
-        System.out.println("[" + (appiumUp ? "OK" : "FAIL") + "] Appium server reachable at " + TestConfig.appiumUrl());
-        System.out.println("[..] App data is kept as-is (pm clear skipped to preserve login session)");
-        System.out.println("===========================");
+        LOG.info("=== Preflight checklist ===");
+        LOG.info("[{}] Android emulator visible in `adb devices`", emulatorUp ? "OK" : "FAIL");
+        LOG.info("[{}] Appium server reachable at {}", appiumUp ? "OK" : "FAIL", TestConfig.appiumUrl());
+        LOG.info("[..] App data is kept as-is (pm clear skipped to preserve login session)");
+        LOG.info("===========================");
 
         if (!emulatorUp) {
             throw new IllegalStateException("No Android emulator/device found. Start the emulator and check `adb devices`.");

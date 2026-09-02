@@ -2,12 +2,14 @@ appium.url=http://127.0.0.1:4723
 app.package=uz.agrobank.chakanaexpress
 app.activity=.MainActivity
 
-# Внимание: это реальный личный аккаунт владельца проекта на живом бэкенде,
-# не изолированный QA-аккаунт (см. docs/claude-memory-notes.md). Не менять
-# без ведома владельца - при необходимости переопределяется флагом
-# -Dphone.number=... без правки кода.
-phone.number=909023162
-otp.code=081020
+# Реальный личный аккаунт владельца проекта на живом бэкенде, не изолированный
+# QA-аккаунт (см. project_real_account_live_backend в памяти проекта). Именно
+# поэтому эти два значения не хранятся в config.properties, закоммиченном в git
+# (см. .gitignore) - скопируй этот файл в config.properties рядом и подставь
+# реальные phone.number/otp.code, либо передавай их флагами -Dphone.number=...
+# -Dotp.code=... без правки файла вообще.
+phone.number=CHANGE_ME
+otp.code=CHANGE_ME
 
 store.name=Eco Bazar
 category.water=Suv

@@ -15,6 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.client.version>10.1.1</java.client.version>
         <testng.version>7.10.2</testng.version>
+        <logback.version>1.5.6</logback.version>
     </properties>
 
     <dependencies>
@@ -27,6 +28,16 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
+        </dependency>
+        <!-- SLF4J API приходит транзитивно от appium java-client/selenium - здесь
+             только реализация (Logback), чтобы вывод диагностики (preflight-чеклист,
+             ретраи, скриншоты при падении) шёл через нормальный логгер вместо
+             System.out.println, и оставался в target/logs/tests.log после прогона, а
+             не только в консоли Maven. -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
         </dependency>
     </dependencies>
 

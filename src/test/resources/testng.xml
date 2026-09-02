@@ -9,6 +9,10 @@
        mvn test -DsuiteXmlFile=src/test/resources/testng-safe.xml
 -->
 <suite name="TezChakana Suite" verbose="1">
+    <listeners>
+        <listener class-name="com.tezchakana.tests.ScreenshotOnFailureListener"/>
+        <listener class-name="com.tezchakana.tests.RetryAnalyzerTransformer"/>
+    </listeners>
     <test name="Checkout Flow">
         <classes>
             <class name="com.tezchakana.tests.CheckoutFlowTest"/>

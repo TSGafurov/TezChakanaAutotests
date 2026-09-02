@@ -21,7 +21,10 @@ public final class TestConfig {
         Properties properties = new Properties();
         try (InputStream in = TestConfig.class.getClassLoader().getResourceAsStream("config.properties")) {
             if (in == null) {
-                throw new IllegalStateException("config.properties не найден в classpath");
+                throw new IllegalStateException("config.properties не найден в classpath - "
+                        + "скопируй src/test/resources/config.properties.example в "
+                        + "src/test/resources/config.properties и подставь реальные phone.number/otp.code "
+                        + "(файл не хранится в git - см. .gitignore)");
             }
             properties.load(in);
         } catch (IOException e) {

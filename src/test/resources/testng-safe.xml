@@ -20,6 +20,10 @@
             <include name="safe"/>
         </run>
     </groups>
+    <listeners>
+        <listener class-name="com.tezchakana.tests.ScreenshotOnFailureListener"/>
+        <listener class-name="com.tezchakana.tests.RetryAnalyzerTransformer"/>
+    </listeners>
     <test name="Home and Onboarding (safe subset)">
         <classes>
             <class name="com.tezchakana.tests.HomeAndOnboardingTest"/>
