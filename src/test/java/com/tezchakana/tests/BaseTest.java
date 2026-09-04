@@ -38,7 +38,17 @@ public class BaseTest {
     public void setUp() throws Exception {
         printPreflightChecklist();
 
+        // udid закреплён явно - воспроизведено вживую 2026-09-03: без него, если к
+        // хосту оказывается подключено больше одного Android-устройства (сюда же
+        // относится любое стороннее устройство, включая неавторизованное по adb - сама
+        // авторизация не нужна, чтобы оно "засветилось" и сбило выбор), Appium может
+        // попытаться создать сессию не на том устройстве и упасть с ошибкой уровня API
+        // ("Error getting device API level") на КАЖДОМ последующем тесте прогона, а не
+        // только на том, что совпало с подключением - половина полного прогона testng.xml
+        // отвалилась именно так, когда кто-то подключил к Маку личный телефон по USB
+        // посреди прогона.
         UiAutomator2Options options = new UiAutomator2Options()
+                .setUdid(ADB_DEVICE)
                 .setAppPackage(TestConfig.appPackage())
                 .setAppActivity(TestConfig.appActivity())
                 .setNoReset(true)

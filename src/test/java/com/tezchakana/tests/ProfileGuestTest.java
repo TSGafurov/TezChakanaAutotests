@@ -31,7 +31,11 @@ public class ProfileGuestTest extends BaseTest {
     // порядок выполнения @Test (TestNG его не гарантирует).
     @BeforeClass
     public void ensureGuestState() throws Exception {
+        // udid явно закреплён - тот же риск ambiguous-device, что и в BaseTest.setUp()
+        // (см. комментарий там), эта сессия создаётся отдельно и не наследует опции
+        // оттуда.
         UiAutomator2Options options = new UiAutomator2Options()
+                .setUdid(ADB_DEVICE)
                 .setAppPackage(TestConfig.appPackage())
                 .setAppActivity(TestConfig.appActivity())
                 .setNoReset(true)
