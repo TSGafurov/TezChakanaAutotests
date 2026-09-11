@@ -181,6 +181,27 @@ public abstract class BaseScreen {
         driver.perform(List.of(swipe));
     }
 
+    // Обратный жест к swipeUpOnScreen() - палец сверху вниз, содержимое списка
+    // прокручивается вверх (к началу). Нужен, чтобы вернуть список в позицию "сверху"
+    // после того, как предыдущий тест в том же классе прокрутил его вниз - см.
+    // HomeScreen.returnToHomeScreen().
+    protected void swipeDownOnScreen() {
+        var size = driver.manage().window().getSize();
+        int startX = size.width / 2;
+        int startY = (int) (size.height * 0.2);
+        int endY = (int) (size.height * 0.8);
+
+        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+        Sequence swipe = new Sequence(finger, 0)
+                .addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), startX, startY))
+                .addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()))
+                .addAction(new Pause(finger, Duration.ofMillis(100)))
+                .addAction(finger.createPointerMove(Duration.ofMillis(300), PointerInput.Origin.viewport(), startX, endY))
+                .addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+
+        driver.perform(List.of(swipe));
+    }
+
     protected void typeViaAdb(String text) {
         try {
             new ProcessBuilder("adb", "shell", "input", "text", text).start().waitFor();

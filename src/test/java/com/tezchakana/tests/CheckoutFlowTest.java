@@ -64,7 +64,15 @@ public class CheckoutFlowTest extends BaseTest {
         } else {
             // Авторизованный старт - promptа не было, "To'lovga o'tish" привёл сразу на
             // экран чекаута (тот же случай, что и в CheckoutDetailsTest).
-            new PaymentScreen(driver).verifyDeliveryDetailsDisplayed();
+            CartScreen leftoverCart = new PaymentScreen(driver)
+                    .verifyDeliveryDetailsDisplayed()
+                    .goBackToCart();
+
+            // 2026-09-11: см. javadoc PaymentScreen.goBackToCart() - без этой очистки товар
+            // и открытый чекаут переживали конец теста и ломали каскадом весь остаток
+            // прогона testng.xml (воспроизведено вживую).
+            leftoverCart.clearCart();
+            leftoverCart.close();
         }
     }
 }

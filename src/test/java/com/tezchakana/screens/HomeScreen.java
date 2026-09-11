@@ -430,5 +430,24 @@ public class HomeScreen extends BaseScreen {
             }
             sleep(Duration.ofMillis(700));
         }
+        scrollHomeContentToTop();
+    }
+
+    // 2026-09-10: NoReset(true) сохраняет позицию скролла между отдельными
+    // Appium-сессиями, а не только сам логин/корзину - живой прогон testng-safe.xml
+    // показал, что после storeListScrollRevealsMoreStores (делает swipeUpOnScreen())
+    // следующий тест в классе (tappingChipFiltersStoreList) стартовал уже прокрученным
+    // вниз: цикл выше выходит, как только виден BAZAR_TAB (чип "Bazar" в верхней
+    // панели, он не прокручивается вместе со списком), не проверяя позицию самого
+    // списка - waitFor(STORE_LIST_HEADER) падал по таймауту, т.к. заголовок "Yaqin
+    // atrofdagi do'konlar" был выше видимой области. Подтверждено скриншотом падения:
+    // экран сразу показывал карточки магазинов без баннера/заголовка сверху.
+    private void scrollHomeContentToTop() {
+        int attempt = 0;
+        int maxAttempts = 12;
+        while (driver.findElements(STORE_LIST_HEADER).isEmpty() && attempt++ < maxAttempts) {
+            swipeDownOnScreen();
+            sleep(Duration.ofMillis(500));
+        }
     }
 }

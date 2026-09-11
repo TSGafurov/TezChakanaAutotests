@@ -131,4 +131,17 @@ public class PaymentScreen extends BaseScreen {
         tapAt(scaledX(ORDER_ERROR_RETRY_REF_X), scaledY(ORDER_ERROR_RETRY_REF_Y));
         return this;
     }
+
+    // 2026-09-11: до этого метода CheckoutFlowTest/CheckoutDetailsTest ничего не убирали
+    // за собой после дохода до этого экрана - товар оставался в корзине, а сам экран
+    // чекаута оставался открытым до конца всего прогона. HomeScreen.returnToHomeScreen()
+    // не распознаёт этот экран (как и Cart) и не может с него восстановиться - на живом
+    // прогоне testng.xml это уронило каскадом ВЕСЬ остаток сьюта (каждый следующий тест
+    // падал по таймауту 15с). back() с этого экрана надёжно возвращает на CartScreen (тот
+    // же паттерн, что CartScreen.close() уже использует для мини-корзины) - вызывающий
+    // тест должен после этого явно очистить корзину через CartScreen.clearCart().
+    public CartScreen goBackToCart() {
+        driver.navigate().back();
+        return new CartScreen(driver);
+    }
 }

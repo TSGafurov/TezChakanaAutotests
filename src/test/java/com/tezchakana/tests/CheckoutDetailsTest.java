@@ -43,9 +43,16 @@ public class CheckoutDetailsTest extends BaseTest {
         Assert.assertFalse(loginScreen.isLoginPromptShown(),
                 "Экран логина показан авторизованному пользователю при переходе в чекаут (CART-05)");
 
-        new PaymentScreen(driver)
+        CartScreen leftoverCart = new PaymentScreen(driver)
                 .verifyDeliveryDetailsDisplayed()
                 .selectCashPayment()
-                .verifyCashPaymentSelected();
+                .verifyCashPaymentSelected()
+                .goBackToCart();
+
+        // 2026-09-11: см. javadoc PaymentScreen.goBackToCart() - без этой очистки товар и
+        // открытый чекаут переживали конец теста и ломали каскадом весь остаток прогона
+        // testng.xml (воспроизведено вживую, тот же случай, что и в CheckoutFlowTest).
+        leftoverCart.clearCart();
+        leftoverCart.close();
     }
 }
