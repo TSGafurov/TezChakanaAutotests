@@ -378,6 +378,22 @@ public class HomeScreen extends BaseScreen {
     private static final By NOTIFICATIONS_SCREEN_MARKER =
             AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"•\")");
 
+    // 2026-09-11: обнаружено вживую на полном прогоне testng.xml (гостевой старт,
+    // аккаунт не авторизован) - экран ввода телефона ("Telefon raqamini kiriting",
+    // тот же маркер, что ProfileScreen.PHONE_ENTRY_SCREEN) оказался недостижимым для
+    // returnToHomeScreen(): кнопка "Davom etish" на нём периодически не реагирует ни на
+    // тап по координате, ни на тап по найденному элементу (см. SYS-17 в
+    // exploration-notes.md, первопричина не установлена), а дефолтный тап по
+    // Home-вкладке на этом экране просто попадает мимо (нет нижней навигации). Один
+    // застрявший тест уронил каскадом весь остаток сьюта, начиная с этого места.
+    // "O'tkazib yuborish" (Skip) в правом верхнем углу - тот же физический элемент, что
+    // и на старте приложения при первом запуске - безопасно возвращает в гостевой Home
+    // с рабочей нижней навигацией, проверено вживую через appium-mcp.
+    private static final By PHONE_ENTRY_SCREEN_MARKER =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Telefon raqamini kiriting\")");
+    private static final By SKIP_LOGIN_BUTTON =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"O'tkazib yuborish\")");
+
     // Общая координата иконки-стрелки AppBar в левом верхнем углу - один и тот же
     // физический элемент на Sozlamalar и Buyurtmalar (и, вероятно, на других подобных
     // "пушнутых" экранах без нижней навигации), поэтому не дублируется отдельно под
@@ -419,6 +435,8 @@ public class HomeScreen extends BaseScreen {
                 driver.activateApp(TestConfig.appPackage());
             } else if (!driver.findElements(STARTUP_ADDRESS_DIALOG).isEmpty()) {
                 tapStartupAddressConfirm();
+            } else if (!driver.findElements(PHONE_ENTRY_SCREEN_MARKER).isEmpty()) {
+                waitFor(SKIP_LOGIN_BUTTON).click();
             } else if (!driver.findElements(SETTINGS_SCREEN_MARKER).isEmpty()
                     || !driver.findElements(ORDERS_SCREEN_MARKER).isEmpty()
                     || !driver.findElements(NOTIFICATIONS_SCREEN_MARKER).isEmpty()) {
