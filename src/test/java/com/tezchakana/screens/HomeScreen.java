@@ -442,7 +442,23 @@ public class HomeScreen extends BaseScreen {
     // списка - waitFor(STORE_LIST_HEADER) падал по таймауту, т.к. заголовок "Yaqin
     // atrofdagi do'konlar" был выше видимой области. Подтверждено скриншотом падения:
     // экран сразу показывал карточки магазинов без баннера/заголовка сверху.
+    // 2026-09-11: первая версия (только swipeDownOnScreen(), maxAttempts=12) оказалась
+    // недостаточно надёжной вживую на полном прогоне testng.xml - в одном случае список
+    // застрял в положении, где верхняя карточка магазина шла сразу за чипами без баннера
+    // и заголовка, несмотря на 12 попыток свайпа (см. скриншот падения
+    // tappingChipFiltersStoreList-20260911-101105.png). Нативный UiScrollable.
+    // scrollToBeginning() надёжнее приближённых свайпов пальцем - подтверждено вживую
+    // через appium-mcp в этой же сессии. Используем его как основной механизм, свайпы -
+    // как резервный (на случай, если сам паттерн со временем перестанет матчить
+    // скроллируемый узел Flutter-дерева).
+    private static final By SCROLL_HOME_LIST_TO_BEGINNING = AppiumBy.androidUIAutomator(
+            "new UiScrollable(new UiSelector().scrollable(true)).scrollToBeginning(30)");
+
     private void scrollHomeContentToTop() {
+        if (!driver.findElements(STORE_LIST_HEADER).isEmpty()) {
+            return;
+        }
+        driver.findElements(SCROLL_HOME_LIST_TO_BEGINNING);
         int attempt = 0;
         int maxAttempts = 12;
         while (driver.findElements(STORE_LIST_HEADER).isEmpty() && attempt++ < maxAttempts) {
