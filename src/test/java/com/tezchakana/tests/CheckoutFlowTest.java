@@ -45,22 +45,39 @@ public class CheckoutFlowTest extends BaseTest {
         LoginScreen loginScreen = cartScreen.proceedToCheckout();
 
         if (loginScreen.isLoginPromptShown()) {
-            OtpScreen otpScreen = loginScreen
-                    .confirmPrompt()
-                    .submitPhoneNumber(TestConfig.phoneNumber());
+            try {
+                OtpScreen otpScreen = loginScreen
+                        .confirmPrompt()
+                        .submitPhoneNumber(TestConfig.phoneNumber());
 
-            otpScreen.enterCode(TestConfig.otpCode());
+                otpScreen.enterCode(TestConfig.otpCode());
 
-            // Дальше пока не идём: подтверждение OTP ("Tasdiqlash") не вызывается, пока не
-            // подтверждено, что тестовый bypass-код реально принимается бэкендом. Как только
-            // будет добро - раскомментировать и продолжить цепочку:
-            //
-            // otpScreen.confirmCode()
-            //         .handleNotificationsPermission()
-            //         .handleLocationPermission()
-            //         .selectCashPayment()
-            //         .placeOrder()
-            //         .verifyOrderSuccess();
+                // Дальше пока не идём: подтверждение OTP ("Tasdiqlash") не вызывается, пока не
+                // подтверждено, что тестовый bypass-код реально принимается бэкендом. Как только
+                // будет добро - раскомментировать и продолжить цепочку:
+                //
+                // otpScreen.confirmCode()
+                //         .handleNotificationsPermission()
+                //         .handleLocationPermission()
+                //         .selectCashPayment()
+                //         .placeOrder()
+                //         .verifyOrderSuccess();
+            } finally {
+                // 2026-09-16: гостевая ветка тоже оставляла товар в корзине (добавляется
+                // безусловно выше, до проверки isLoginPromptShown()) - воспроизведено вживую:
+                // SYS-17 ("Davom etish" на экране ввода телефона периодически не реагирует)
+                // остановил тест прямо на этом экране, а товар пережил конец сессии и засорил
+                // следующие тесты в сьюте (тот же класс проблемы, что и SYS-13 для
+                // авторизованной ветки ниже, см. exploration-notes.md). returnToHomeScreen()
+                // уже умеет уходить с экрана ввода телефона (тоже SYS-17) - переоткрываем
+                // магазин обычным путём и чистим корзину, если она не пуста.
+                StoreScreen recoveryStore = new HomeScreen(driver)
+                        .openBazarTab()
+                        .openStore(TestConfig.storeName());
+                if (recoveryStore.hasItemsInCart()) {
+                    recoveryStore.openCartSummaryBar().clearCart();
+                }
+            }
         } else {
             // Авторизованный старт - promptа не было, "To'lovga o'tish" привёл сразу на
             // экран чекаута (тот же случай, что и в CheckoutDetailsTest).
