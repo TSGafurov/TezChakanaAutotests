@@ -204,7 +204,7 @@ public abstract class BaseScreen {
 
     protected void typeViaAdb(String text) {
         try {
-            new ProcessBuilder("adb", "shell", "input", "text", text).start().waitFor();
+            new ProcessBuilder("adb", "-s", TestConfig.deviceUdid(), "shell", "input", "text", text).start().waitFor();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Не удалось ввести текст через adb: " + text, e);
         }

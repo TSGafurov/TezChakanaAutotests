@@ -9,7 +9,11 @@ app.activity=.MainActivity
 # реальные phone.number/otp.code, либо передавай их флагами -Dphone.number=...
 # -Dotp.code=... без правки файла вообще.
 phone.number=CHANGE_ME
-otp.code=CHANGE_ME
+# Статический тестовый OTP убран бэкендом 2026-09-16: manual (или пустое значение) -
+# код из SMS вводит человек на устройстве, тест ждёт до otp.manual.timeout.seconds (180).
+otp.code=manual
+# Необязательно: udid устройства. Без него берётся единственное устройство из `adb devices`.
+# device.udid=emulator-5554
 
 store.name=Eco Bazar
 category.water=Suv

@@ -58,11 +58,6 @@
             <class name="com.tezchakana.tests.AddressesTest"/>
         </classes>
     </test>
-    <test name="Profile Guest">
-        <classes>
-            <class name="com.tezchakana.tests.ProfileGuestTest"/>
-        </classes>
-    </test>
     <test name="Settings">
         <classes>
             <class name="com.tezchakana.tests.SettingsTest"/>
@@ -117,6 +112,14 @@
                  адрес "Chust" (владелец аккаунта осведомлён и одобрил, 2026-08-28).
                  См. javadoc AddressCoverageTest. -->
             <class name="com.tezchakana.tests.AddressCoverageTest"/>
+        </classes>
+    </test>
+    <!-- Последним: разлогинивает реальный аккаунт (см. ProfileGuestTest.ensureGuestState()),
+         а статического OTP больше нет - повторный вход требует ручного ввода SMS-кода,
+         поэтому все авторизованные тесты должны отработать до него. -->
+    <test name="Profile Guest">
+        <classes>
+            <class name="com.tezchakana.tests.ProfileGuestTest"/>
         </classes>
     </test>
 </suite>

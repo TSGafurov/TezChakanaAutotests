@@ -21,7 +21,7 @@ public class BaseTest {
 
     // Используется OrderErrorTest/OrderRetryTest для детерминированного отключения сети
     // перед оформлением заказа (см. toggleNetwork() ниже).
-    protected static final String ADB_DEVICE = "emulator-5554";
+    protected static final String ADB_DEVICE = TestConfig.deviceUdid();
 
     protected AndroidDriver driver;
 
