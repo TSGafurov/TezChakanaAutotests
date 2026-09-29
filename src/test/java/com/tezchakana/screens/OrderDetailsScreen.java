@@ -3,104 +3,139 @@ package com.tezchakana.screens;
 import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
+import org.testng.SkipException;
 
-import java.time.Duration;
+import java.util.List;
 
 /**
- * Деталь заказа (открывается из OrdersScreen.openFirstOrder()): статус-степпер (4
- * стадии) + красная иконка отмены -> диалог "Buyurtmani bekor qilish" (ORDH-03).
- * Проверено вживую 2026-08-28.
+ * Деталь заказа (открывается из OrdersScreen.openFirstOrder()). Редизайн v1.1.8
+ * (проверено вживую 2026-09-29): вместо шапки с номером заказа и красной иконкой
+ * отмены теперь - кнопка-стрелка "˅" слева, "Yordam" справа (открывает поддержку в
+ * Telegram), крупный заголовок статуса ("Kuryer kechikmoqda", "Buyurtma yetkazildi"),
+ * степпер, блоки курьера / адреса / "Buyurtmangiz" (со ссылкой "Ko'rish") / способа
+ * оплаты и "Umumiy qiymati" с итогом "Jami". Номер заказа виден только на экране
+ * состава заказа ("Ko'rish") - его заголовок.
  */
 public class OrderDetailsScreen extends BaseScreen {
 
-    // Иконка-корзина отмены заказа (верх справа) - icon-only, без content-desc, но с
-    // реальными (не на весь экран) bounds ([938,63][1080,207] на эталоне 1080x2400,
-    // проверено вживую через page source) - тот же безопасный паттерн, что и у других
-    // icon-only кнопок в проекте (см. HomeScreen.FAVORITES_ICON_REF).
-    private static final int CANCEL_ICON_REF_X = 1009;
-    private static final int CANCEL_ICON_REF_Y = 135;
+    private static final By ORDER_ITEMS_BLOCK = AppiumBy.accessibilityId("Buyurtmangiz");
+    private static final By VIEW_ITEMS_LINK = AppiumBy.accessibilityId("Ko'rish");
 
-    private static final By CANCEL_DIALOG_MESSAGE = AppiumBy.accessibilityId("Buyurtmani bekor qilmoqchimisiz?");
-
-    // ORDH-02: заголовок экрана - отдельный смерженный узел ровно с номером заказа
-    // ("TEZ00168", без переноса строк и доп. текста) - descriptionMatches с якорями
-    // ^/$ отличает его от карточки сводки заказа ниже (OrderCard в OrdersScreen.
-    // ORDER_CARD и её собственная копия здесь - тот же формат "Buyurtma raqami:
-    // ...\n<номер>\n<статус>\n..."), у которой номер заказа - лишь часть куда более
-    // длинного content-desc. Номер заказа динамический (разный для каждого заказа
-    // реального аккаунта), поэтому не хардкодим конкретное значение.
-    // Символьный класс "[0-9]" вместо "\d" - см. комментарий у StoreScreen.CART_SUMMARY_BAR
-    // про то, что экранированные regex-последовательности (\s/\S) не доживают до
-    // реального движка через этот androidUIAutomator-парсер на устройстве, "\d" по той
-    // же причине воспроизведено вживую 2026-08-31 (не матчил вообще ничего, хотя
-    // непереэкранированный класс символов сработал сразу).
-    private static final By TITLE_ORDER_NUMBER =
+    // Заголовок экрана состава заказа - сам номер ("TEZ00789"). ^/$ отличает его от
+    // карточки списка заказов, где номер - лишь часть длинного content-desc. Символьный
+    // класс "[0-9]" вместо "\d" - см. комментарий у StoreScreen.CART_SUMMARY_BAR про
+    // экранированные regex-последовательности в androidUIAutomator.
+    private static final By ITEMS_SCREEN_ORDER_NUMBER =
             AppiumBy.androidUIAutomator("new UiSelector().descriptionMatches(\"^TEZ[0-9]+$\")");
+    private static final By ITEMS_SCREEN_TOTAL_LABEL = AppiumBy.accessibilityId("Umumiy qiymati");
 
-    // Тот же формат карточки, что и OrdersScreen.ORDER_CARD в списке заказов - здесь
-    // это карточка КОНКРЕТНОГО открытого заказа внизу экрана деталей.
-    private static final By ORDER_INFO_CARD =
-            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"Buyurtma raqami:\")");
+    // Любой элемент с "bekor" ("Buyurtmani bekor qilish" и т.п.) - в v1.1.8 для заказа
+    // в статусе "в пути"/"курьер опаздывает" отмены на экране нет вовсе, а для
+    // статуса, где она есть, новая раскладка ещё не снята вживую.
+    private static final By CANCEL_CONTROL =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"bekor\")");
 
-    // Степпер статуса (4 стадии: check/корзина/карта/флаг) - живьём подтверждено
-    // 2026-08-31, что все 4 иконки степпера - android.widget.ImageView без
-    // content-desc, неотличимые друг от друга через дерево доступности (нет сигнала,
-    // какая стадия активна, кроме визуального цвета фона, не читаемого через
-    // Appium). Из-за этого сам степпер НЕ проверяется отдельным ассертом - см.
-    // ORDH-02 в docs/exploration-notes.md про то, почему это ограничение
-    // accessibility-дерева приложения, а не пробел в тесте.
+    // Стрелка "˅" (детали заказа) и "←" (состав заказа) - обе icon-only без
+    // content-desc в левом верхнем углу, в пределах той же зоны, что и
+    // HomeScreen.APPBAR_BACK_ARROW_REF_X/Y (проверено вживую: [42,84][147,189] на эталоне).
+    private static final int TOP_LEFT_BUTTON_REF_X = 73;
+    private static final int TOP_LEFT_BUTTON_REF_Y = 135;
 
-    // "Yo'q" - реальный (не смерженный) узел с отдельными bounds ([246,2214][325,2261]
-    // на эталоне 1080x2400, проверено вживую), но clickable="false" в дереве
-    // доступности - тот же случай, что и STARTUP_CONFIRM_ADDRESS_BUTTON в HomeScreen,
-    // поэтому тап по координате центра, а не click() по элементу. Кнопка подтверждения
-    // отмены ("Buyurtmani bekor qilish") в этом классе намеренно не заведена - тест
-    // должен физически не иметь способа её нажать.
-    private static final int CANCEL_DIALOG_NO_REF_X = 285;
-    private static final int CANCEL_DIALOG_NO_REF_Y = 2238;
+    private final String listCardText;
 
-    public OrderDetailsScreen(AndroidDriver driver) {
+    public OrderDetailsScreen(AndroidDriver driver, String listCardText) {
         super(driver);
+        this.listCardText = listCardText;
     }
 
-    // ORDH-03: тап по иконке отмены открывает диалог с сообщением и полем причины -
-    // само открытие диалога безопасно (ничего не отменяет). Закрывается через "Yo'q",
-    // подтверждающая кнопка ("Buyurtmani bekor qilish") никогда не тапается.
+    // ORDH-03/ORDH-09: в v1.1.8 кнопка отмены есть не у каждого заказа (у "в пути"
+    // её нет, см. FAQ "Buyurtmani bekor qilish mumkinmi?"). Сам диалог отмены после
+    // редизайна ещё не снят вживую, поэтому тест честно пропускается, а не тапает
+    // вслепую по старым координатам (прежняя координата иконки теперь попадает в
+    // "Yordam").
     public OrderDetailsScreen verifyCancelDialogOpensAndDismiss() {
-        tapAt(scaledX(CANCEL_ICON_REF_X), scaledY(CANCEL_ICON_REF_Y));
-        Assert.assertTrue(waitFor(CANCEL_DIALOG_MESSAGE).isDisplayed(),
-                "Диалог отмены заказа не открылся по иконке отмены");
-        // Узел появляется в дереве доступности до того, как диалог долистает
-        // анимацию появления снизу - тап по "Yo'q" сразу после waitFor() рискует
-        // попасть по ещё не занявшей окончательное место кнопке (тот же паттерн,
-        // что и в AddAddressScreen.confirmLocation()).
-        sleep(Duration.ofMillis(500));
-        tapAt(scaledX(CANCEL_DIALOG_NO_REF_X), scaledY(CANCEL_DIALOG_NO_REF_Y));
-        try {
-            waitUntilGone(CANCEL_DIALOG_MESSAGE);
-        } catch (org.openqa.selenium.TimeoutException e) {
-            Assert.fail("Диалог отмены заказа не закрылся после \"Yo'q\"");
+        waitFor(ORDER_ITEMS_BLOCK);
+        if (driver.findElements(CANCEL_CONTROL).isEmpty()) {
+            close();
+            throw new SkipException("У первого заказа нет кнопки отмены (статус: " + statusOf(listCardText)
+                    + "). Нужен заказ на ранней стадии, чтобы снять новый диалог отмены v1.1.8.");
         }
+        close();
+        throw new SkipException("Кнопка отмены найдена, но диалог отмены v1.1.8 ещё не снят вживую - "
+                + "дописать шаги по живому снимку, прежде чем тапать.");
+    }
+
+    // ORDH-02: номер, статус и сумма согласованы между карточкой списка заказов,
+    // экраном деталей и экраном состава заказа ("Ko'rish").
+    public OrderDetailsScreen verifyOrderDetailsShowConsistentInfo() {
+        waitFor(ORDER_ITEMS_BLOCK);
+        Assert.assertFalse(statusOf(listCardText).isEmpty(), "Статус заказа пуст в карточке списка: " + listCardText);
+
+        waitFor(VIEW_ITEMS_LINK).click();
+        String itemsTitle = waitFor(ITEMS_SCREEN_ORDER_NUMBER).getAttribute("content-desc");
+        Assert.assertEquals(itemsTitle, numberOf(listCardText),
+                "Номер заказа на экране состава не совпадает с карточкой списка: " + listCardText);
+
+        String listSum = digitsOf(sumOf(listCardText));
+        String itemsTotal = digitsOf(textRightOf(ITEMS_SCREEN_TOTAL_LABEL));
+        Assert.assertEquals(itemsTotal, listSum,
+                "Сумма в составе заказа не совпадает с суммой в списке: " + listCardText);
+
+        tapAt(scaledX(TOP_LEFT_BUTTON_REF_X), scaledY(TOP_LEFT_BUTTON_REF_Y));
+        waitFor(ORDER_ITEMS_BLOCK);
+        close();
         return this;
     }
 
-    // ORDH-02: номер заказа в шапке экрана совпадает с номером в карточке сводки того
-    // же заказа, статус - не пустая метка, сумма - в ожидаемом формате ("<число> uzs").
-    // Не проверяет сам статус-степпер - см. комментарий у ORDER_INFO_CARD выше.
-    public OrderDetailsScreen verifyOrderDetailsShowConsistentInfo() {
-        String titleOrderNumber = waitFor(TITLE_ORDER_NUMBER).getAttribute("content-desc");
-        String infoCardText = waitFor(ORDER_INFO_CARD).getAttribute("content-desc");
+    // Стрелка "˅" закрывает детали и возвращает на список заказов ("Buyurtmalar").
+    public void close() {
+        tapAt(scaledX(TOP_LEFT_BUTTON_REF_X), scaledY(TOP_LEFT_BUTTON_REF_Y));
+    }
 
-        Assert.assertTrue(infoCardText.contains(titleOrderNumber),
-                "Номер заказа в шапке (\"" + titleOrderNumber + "\") не совпадает с карточкой деталей: " + infoCardText);
-        Assert.assertTrue(infoCardText.matches("(?s).*\\d[\\d\\s]*uzs.*"),
-                "Сумма заказа не отображается в ожидаемом формате (\"<число> uzs\"): " + infoCardText);
+    // Значение в той же строке, что и подпись (например "Umumiy qiymati" → "2 700 so'm"):
+    // Flutter отдаёт подпись и значение отдельными узлами без общего родителя с
+    // content-desc, поэтому берём узел с "so'm", ближайший по вертикали к подписи.
+    private String textRightOf(By label) {
+        WebElement labelNode = waitFor(label);
+        int labelCenterY = labelNode.getRect().getY() + labelNode.getRect().getHeight() / 2;
+        List<WebElement> amounts = driver.findElements(
+                AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"so'm\")"));
+        WebElement closest = null;
+        int bestDistance = Integer.MAX_VALUE;
+        for (WebElement amount : amounts) {
+            int centerY = amount.getRect().getY() + amount.getRect().getHeight() / 2;
+            int distance = Math.abs(centerY - labelCenterY);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                closest = amount;
+            }
+        }
+        Assert.assertNotNull(closest, "Не найдено значение суммы рядом с подписью " + label);
+        return closest.getAttribute("content-desc");
+    }
 
-        String[] lines = infoCardText.split("\n");
-        Assert.assertTrue(lines.length >= 3, "Карточка деталей заказа не содержит ожидаемых строк (номер/статус/дата/сумма): " + infoCardText);
-        String status = lines[2].trim();
-        Assert.assertFalse(status.isEmpty(), "Статус заказа пуст в карточке деталей: " + infoCardText);
-        return this;
+    // Карточка списка: "Buyurtma raqami:\nTEZ00789\nYetkazib berilmoqda\nBuyurtma sanasi:\n28.09.2026\n2 700 uzs"
+    private static String numberOf(String cardText) {
+        return line(cardText, 1);
+    }
+
+    private static String statusOf(String cardText) {
+        return line(cardText, 2);
+    }
+
+    private static String sumOf(String cardText) {
+        String[] lines = cardText.split("\n");
+        return lines[lines.length - 1];
+    }
+
+    private static String line(String cardText, int index) {
+        String[] lines = cardText.split("\n");
+        return lines.length > index ? lines[index].trim() : "";
+    }
+
+    private static String digitsOf(String text) {
+        return text.replaceAll("[^0-9]", "");
     }
 }

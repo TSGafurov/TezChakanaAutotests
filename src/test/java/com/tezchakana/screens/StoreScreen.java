@@ -4,7 +4,9 @@ import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.time.Duration;
 import java.util.List;
 
 public class StoreScreen extends BaseScreen {
@@ -41,9 +43,24 @@ public class StoreScreen extends BaseScreen {
     private static final By PRODUCT_GRID_LOADED_INDICATOR = AppiumBy.androidUIAutomator(
             "new UiSelector().descriptionMatches(\"(?s)(?!.*mahsulot).*so'm.*\")");
 
+    // NoReset(true) сохраняет позицию скролла магазина между сессиями (воспроизведено
+    // 2026-09-29: повтор ProductCardQuantityTest открыл Eco Bazar уже прокрученным вниз,
+    // а цикл ниже листает только вниз - "Uy uchun bozorlik" сверху так и не нашёлся).
+    // Тот же нативный scrollToBeginning, что и в HomeScreen.scrollHomeContentToTop().
+    private static final By SCROLL_TO_BEGINNING = AppiumBy.androidUIAutomator(
+            "new UiScrollable(new UiSelector().scrollable(true)).scrollToBeginning(30)");
+
+    // Сетка товаров категории на v1.1.8 иногда дольше 15 с показывает заглушки
+    // загрузки (снято вживую 2026-09-29 на "Bozorlik") - ждём дольше стандартного.
+    private static final Duration PRODUCT_GRID_TIMEOUT = Duration.ofSeconds(30);
+
     public StoreScreen scrollToCategory(String categoryLabel) {
         By categoryTile = AppiumBy.accessibilityId(categoryLabel);
         List<WebElement> found = driver.findElements(categoryTile);
+        if (found.isEmpty()) {
+            driver.findElements(SCROLL_TO_BEGINNING);
+            found = driver.findElements(categoryTile);
+        }
         int maxSwipes = 10;
         while (found.isEmpty() && maxSwipes-- > 0) {
             swipeUpOnScreen();
@@ -53,7 +70,8 @@ public class StoreScreen extends BaseScreen {
             throw new IllegalStateException("Категория \"" + categoryLabel + "\" не найдена после прокрутки списка категорий магазина");
         }
         found.get(0).click();
-        waitFor(PRODUCT_GRID_LOADED_INDICATOR);
+        new WebDriverWait(driver, PRODUCT_GRID_TIMEOUT)
+                .until(d -> !d.findElements(PRODUCT_GRID_LOADED_INDICATOR).isEmpty());
         return this;
     }
 

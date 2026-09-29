@@ -39,9 +39,13 @@ public class OrdersScreen extends BaseScreen {
         return this;
     }
 
+    // Текст карточки передаётся в OrderDetailsScreen: после редизайна v1.1.8 номер и
+    // сумма заказа на самом экране деталей не видны, сверять их не с чем, кроме списка.
     public OrderDetailsScreen openFirstOrder() {
-        waitFor(ORDER_CARD).click();
-        return new OrderDetailsScreen(driver);
+        var card = waitFor(ORDER_CARD);
+        String cardText = card.getAttribute("content-desc");
+        card.click();
+        return new OrderDetailsScreen(driver, cardText);
     }
 
     // Самый свежий заказ - первая карточка во вкладке "Faol" (новые заказы реального

@@ -14,6 +14,14 @@ import java.util.Set;
 public class HomeScreen extends BaseScreen {
 
     private static final By BAZAR_TAB = AppiumBy.accessibilityId("Bazar");
+    // Признак "мы на Home" для recovery-логики, не зависящий от языка интерфейса: чип
+    // продуктовых магазинов называется "Bazar" на O'zbekcha и "Магазин" на русском
+    // (2026-09-29: returnToHomeScreen() и защита openProfileTab() видели только "Bazar",
+    // и LanguageSwitchTest на русском интерфейсе не мог дойти до профиля, чтобы вернуть
+    // узбекский - аккаунт оставался на русском). "Бозор"/"Базар" - вероятные варианты
+    // для Ўзбекча, живьём не сверены.
+    private static final By HOME_SCREEN_MARKER = AppiumBy.xpath(
+            "//*[@content-desc='Bazar' or @content-desc='Магазин' or @content-desc='Бозор' or @content-desc='Базар']");
     private static final By HAMMASI_CHIP = AppiumBy.accessibilityId("Hammasi");
     private static final By GULLAR_CHIP = AppiumBy.accessibilityId("Gullar");
     private static final By KAFE_CHIP = AppiumBy.accessibilityId("Kafe");
@@ -115,6 +123,13 @@ public class HomeScreen extends BaseScreen {
     // не видно.
     public ProfileScreen openProfileTab() {
         returnToHomeScreen();
+        // Координатный тап допустим только с настоящей Home: на нераспознанном экране та
+        // же точка может оказаться чужой кнопкой (см. CHUCK_INSPECTOR_MARKER - там это
+        // "Поделиться"). Лучше упасть с понятной причиной, чем тапнуть вслепую.
+        if (driver.findElements(HOME_SCREEN_MARKER).isEmpty()) {
+            throw new IllegalStateException("returnToHomeScreen() не вернул приложение на Home - "
+                    + "тап по вкладке Profile по координате небезопасен на неизвестном экране");
+        }
         tapAt(scaledX(PROFILE_TAB_REF_X), scaledY(PROFILE_TAB_REF_Y));
         return new ProfileScreen(driver);
     }
@@ -394,6 +409,27 @@ public class HomeScreen extends BaseScreen {
     private static final By SKIP_LOGIN_BUTTON =
             AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"O'tkazib yuborish\")");
 
+    // v1.1.8 (2026-09-29): детали заказа ("Buyurtmangiz" + "Ko'rish") и состав заказа
+    // ("Aloqa uchun") - тоже экраны без нижней навигации; их кнопки "˅"/"←" в левом
+    // верхнем углу попадают в ту же зону APPBAR_BACK_ARROW. Без этого маркера дефолтный
+    // тап по Home-вкладке бил в блок "Yetkazib berish" на деталях и тест застревал,
+    // а тап следующего теста по старой координате иконки отмены попадал в "Yordam".
+    private static final By ORDER_DETAILS_SCREEN_MARKER = AppiumBy.accessibilityId("Buyurtmangiz");
+    private static final By ORDER_ITEMS_SCREEN_MARKER = AppiumBy.accessibilityId("Aloqa uchun");
+
+    // Отладочный HTTP-инспектор Chuck, встроенный в сборку 1.1.8 (43) - живёт в том же
+    // пакете приложения, поэтому проверка getCurrentPackage() ниже его не ловит.
+    // Случайно открылся вживую 2026-09-29 (вместе с системным окном "Поделиться") и
+    // уронил каскадом OrdersTest/NotificationsTest. back() закрывает его экраны по одному.
+    // Заголовок Chuck лежит в content-desc ("Chuck - HTTP Call Details"), а не в text -
+    // первая версия маркера через textContains его не видела. Опаснее всего здесь то,
+    // что плавающая кнопка "Поделиться" Chuck стоит ровно на месте вкладки Profile
+    // (PROFILE_TAB_REF_X/Y): тап по "Profile" на экране Chuck отправлял лог HTTP-запросов
+    // приложения в системное окно "Поделиться" (воспроизведено вживую 2026-09-29, текст
+    // лога ушёл в поле поиска Google). Поэтому openProfileTab() тоже сначала уходит из Chuck.
+    private static final By CHUCK_INSPECTOR_MARKER = AppiumBy.xpath(
+            "//*[contains(@content-desc,'Chuck') or contains(@text,'Chuck')]");
+
     // Общая координата иконки-стрелки AppBar в левом верхнем углу - один и тот же
     // физический элемент на Sozlamalar и Buyurtmalar (и, вероятно, на других подобных
     // "пушнутых" экранах без нижней навигации), поэтому не дублируется отдельно под
@@ -428,7 +464,7 @@ public class HomeScreen extends BaseScreen {
         clickIfPresent(LOCATION_ACCURACY_DIALOG_DISMISS, Duration.ofMillis(500));
         int attempt = 0;
         int maxAttempts = 8;
-        while (driver.findElements(BAZAR_TAB).isEmpty() && attempt++ < maxAttempts) {
+        while (driver.findElements(HOME_SCREEN_MARKER).isEmpty() && attempt++ < maxAttempts) {
             boolean dangerousCtaVisible = !driver.findElements(DANGEROUS_FULLSCREEN_SAVE_CTA).isEmpty()
                     || !driver.findElements(DANGEROUS_FULLSCREEN_ADD_ADDRESS_CTA).isEmpty();
             if (!TestConfig.appPackage().equals(driver.getCurrentPackage())) {
@@ -439,9 +475,11 @@ public class HomeScreen extends BaseScreen {
                 waitFor(SKIP_LOGIN_BUTTON).click();
             } else if (!driver.findElements(SETTINGS_SCREEN_MARKER).isEmpty()
                     || !driver.findElements(ORDERS_SCREEN_MARKER).isEmpty()
-                    || !driver.findElements(NOTIFICATIONS_SCREEN_MARKER).isEmpty()) {
+                    || !driver.findElements(NOTIFICATIONS_SCREEN_MARKER).isEmpty()
+                    || !driver.findElements(ORDER_DETAILS_SCREEN_MARKER).isEmpty()
+                    || !driver.findElements(ORDER_ITEMS_SCREEN_MARKER).isEmpty()) {
                 tapAt(scaledX(APPBAR_BACK_ARROW_REF_X), scaledY(APPBAR_BACK_ARROW_REF_Y));
-            } else if (dangerousCtaVisible) {
+            } else if (dangerousCtaVisible || !driver.findElements(CHUCK_INSPECTOR_MARKER).isEmpty()) {
                 driver.navigate().back();
             } else {
                 tapAt(scaledX(HOME_TAB_REF_X), scaledY(HOME_TAB_REF_Y));

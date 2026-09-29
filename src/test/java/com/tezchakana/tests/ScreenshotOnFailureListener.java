@@ -31,6 +31,24 @@ public class ScreenshotOnFailureListener implements ITestListener {
 
     @Override
     public void onTestFailure(ITestResult result) {
+        capture(result, "");
+    }
+
+    // Попытка, после которой RetryOnce назначил повтор, TestNG помечает как SKIP с
+    // wasRetried()=true, а не как FAILURE - без этого скриншот и причина первого падения
+    // терялись, и разбираться приходилось, дожидаясь итогового отчёта в конце прогона.
+    @Override
+    public void onTestSkipped(ITestResult result) {
+        if (result.wasRetried()) {
+            capture(result, "-attempt1");
+        }
+    }
+
+    private void capture(ITestResult result, String suffix) {
+        if (result.getThrowable() != null) {
+            LOG.warn("Падение {}.{}{}: {}", result.getTestClass().getRealClass().getSimpleName(),
+                    result.getMethod().getMethodName(), suffix, firstLine(result.getThrowable().getMessage()));
+        }
         Object instance = result.getInstance();
         // Не каждый провал - это Appium-сессия (например, падение до создания driver
         // в BaseTest.setUp()) - в этом случае просто нечего снимать.
@@ -43,7 +61,7 @@ public class ScreenshotOnFailureListener implements ITestListener {
             File source = ((TakesScreenshot) baseTest.driver).getScreenshotAs(OutputType.FILE);
             String fileName = result.getTestClass().getRealClass().getSimpleName()
                     + "." + result.getMethod().getMethodName()
-                    + "-" + LocalDateTime.now().format(TIMESTAMP_PATTERN) + ".png";
+                    + suffix + "-" + LocalDateTime.now().format(TIMESTAMP_PATTERN) + ".png";
             Path target = SCREENSHOT_DIR.resolve(fileName);
             Files.copy(source.toPath(), target);
             LOG.info("Сохранён скриншот падения: {}", target);
@@ -52,5 +70,13 @@ public class ScreenshotOnFailureListener implements ITestListener {
             // маскировать/заменять исходную причину провала теста.
             LOG.warn("Не удалось сохранить скриншот: {}", e.getMessage());
         }
+    }
+
+    private static String firstLine(String message) {
+        if (message == null) {
+            return "(без сообщения)";
+        }
+        int newline = message.indexOf('\n');
+        return newline < 0 ? message : message.substring(0, newline);
     }
 }
