@@ -236,6 +236,25 @@ public class HomeScreen extends BaseScreen {
         return this;
     }
 
+    // ADDR-02: адреса из шторки выбора в шапке Home (без меток, последняя строка
+    // content-desc строки). Шторку закрываем аппаратным back - в ней видна опасная CTA
+    // "Manzil qo'shish" (см. DANGEROUS_FULLSCREEN_ADD_ADDRESS_CTA), тап по координатам
+    // здесь недопустим.
+    private static final By ADDRESS_PICKER_ROW = AppiumBy.androidUIAutomator(
+            "new UiSelector().descriptionContains(\"Boshlang‘ich manzil\")");
+
+    public java.util.Set<String> savedAddressTextsFromHeaderPicker() {
+        openAddressPickerFromHeader();
+        waitFor(ADDRESS_PICKER_ROW);
+        java.util.Set<String> addresses = new java.util.TreeSet<>();
+        for (var row : driver.findElements(ADDRESS_PICKER_ROW)) {
+            String[] lines = row.getAttribute("content-desc").split("\n");
+            addresses.add(lines[lines.length - 1].trim());
+        }
+        driver.navigate().back();
+        return addresses;
+    }
+
     // Открывает флоу добавления нового адреса через карту с поиском (см.
     // AddAddressScreen/AddressFormScreen) - в отличие от selectSavedAddress() ниже, не
     // зависит от того, что нужный адрес уже сохранён в "Manzillar" и что его текст

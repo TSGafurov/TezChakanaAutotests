@@ -17,6 +17,10 @@ public class DetailsScreen extends BaseScreen {
     private static final By INSTAGRAM_BUTTON = AppiumBy.accessibilityId("Instagram qo'shish");
     private static final By TELEGRAM_BUTTON = AppiumBy.accessibilityId("Telegram qo'shish");
 
+    // Второй EditText на экране (первый - "Ism"; телефон - не поле, а read-only текст).
+    private static final By EMAIL_FIELD =
+            AppiumBy.androidUIAutomator("new UiSelector().className(\"android.widget.EditText\").instance(1)");
+
     public DetailsScreen(AndroidDriver driver) {
         super(driver);
     }
@@ -39,4 +43,31 @@ public class DetailsScreen extends BaseScreen {
     // непиксельного сигнала для автоматической проверки нет. Тапать реальный "Saqlash"
     // на живом аккаунте ради проверки состояния - лишний риск. См.
     // project-real-account-live-backend в памяти проекта.
+
+    // DET-03: ввод e-mail через adb (sendKeys во Flutter-поля этого приложения не
+    // доходит, см. OtpScreen.enterCode()). Ничего не сохраняет - вызывающий тест уходит
+    // с экрана через discardChanges().
+    public DetailsScreen enterEmail(String email) {
+        waitFor(EMAIL_FIELD).click();
+        sleep(java.time.Duration.ofMillis(500));
+        typeViaAdb(email);
+        sleep(java.time.Duration.ofMillis(700));
+        // Клавиатура закрывает нижнюю кнопку "Saqlash" - без этого цвет кнопки читался
+        // с клавиатуры, и проверка ложно считала кнопку неактивной (2026-10-02).
+        driver.hideKeyboard();
+        sleep(java.time.Duration.ofMillis(700));
+        return this;
+    }
+
+    // Активность "Saqlash" - по цвету кнопки (см. комментарий DET-02 выше и
+    // BaseScreen.isBottomCtaActive()): это и есть тот пиксельный сигнал, которого не
+    // хватало раньше. Кнопку не нажимаем.
+    public boolean isSaveButtonActive() {
+        return isBottomCtaActive();
+    }
+
+    // Уход без сохранения: аппаратный back (не тап по "Saqlash").
+    public void discardChanges() {
+        driver.navigate().back();
+    }
 }

@@ -49,18 +49,10 @@ public class HomeAndOnboardingTest extends BaseTest {
         new HomeScreen(driver).verifyStoreListScrollRevealsMoreStores();
     }
 
-    @Test(groups = "mutating")
-    public void changingAddressAffectsStoreList() {
-        HomeScreen homeScreen = new HomeScreen(driver);
-
-        homeScreen.openAddressPickerFromHeader()
-                .selectSavedAddress(TestConfig.alternateAddressLabel())
-                .verifyNoDeliveryCoverageMessageShown();
-
-        // Восстанавливаем исходный адрес - иначе реальный аккаунт остался бы с
-        // изменённым адресом доставки после теста.
-        homeScreen.openAddressPickerFromHeader().selectSavedAddress(TestConfig.defaultAddressLabel());
-    }
+    // HOME-05 (смена адреса меняет список магазинов) покрыт надёжнее в
+    // AddressCoverageTest. Прежний changingAddressAffectsStoreList удалён 2026-10-02:
+    // искал сохранённый адрес по TestConfig.alternateAddressLabel() ("Yunusobod"),
+    // которого на аккаунте нет, и падал при каждом прогоне.
 
     // ONB-04: перезапуск процесса приложения (не сессии Appium) заново показывает
     // диалог подтверждения адреса - воспроизводится не только на первом запуске.

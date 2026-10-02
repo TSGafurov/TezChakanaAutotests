@@ -4,6 +4,7 @@ import com.tezchakana.config.TestConfig;
 import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.By;
+import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Pause;
@@ -11,6 +12,9 @@ import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
@@ -151,6 +155,32 @@ public abstract class BaseScreen {
 
     protected void tapBottomCta() {
         tapAt(scaledX(BOTTOM_CTA_REF_X), scaledY(BOTTOM_CTA_REF_Y));
+    }
+
+    // Активна ли нижняя CTA-кнопка. Смерженный узел CTA всегда enabled/clickable в дереве
+    // доступности независимо от состояния (см. DET-02/CHK-04 в exploration-notes.md),
+    // поэтому единственный признак - цвет самой кнопки на скриншоте: активная красная,
+    // неактивная светло-серая. Точка чуть левее центра (x=300), чтобы не попасть в
+    // белый текст подписи. Проверено на "Saqlash" в "Mening tafsilotlarim" (v1.1.8).
+    private static final int BOTTOM_CTA_COLOR_PROBE_REF_X = 300;
+    private static final int BOTTOM_CTA_COLOR_PROBE_REF_Y = 2236;
+
+    protected boolean isBottomCtaActive() {
+        try {
+            byte[] png = driver.getScreenshotAs(OutputType.BYTES);
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
+            // Скриншот может быть в другом масштабе, чем окно driver - пересчитываем
+            // эталонные координаты под фактический размер картинки.
+            int x = BOTTOM_CTA_COLOR_PROBE_REF_X * image.getWidth() / REFERENCE_SCREEN_WIDTH;
+            int y = BOTTOM_CTA_COLOR_PROBE_REF_Y * image.getHeight() / REFERENCE_SCREEN_HEIGHT;
+            int rgb = image.getRGB(x, y);
+            int red = (rgb >> 16) & 0xFF;
+            int green = (rgb >> 8) & 0xFF;
+            int blue = rgb & 0xFF;
+            return red > 180 && green < 110 && blue < 110;
+        } catch (IOException e) {
+            throw new IllegalStateException("Не удалось прочитать скриншот для проверки цвета CTA", e);
+        }
     }
 
     protected void tapAt(int x, int y) {

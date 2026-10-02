@@ -1,6 +1,8 @@
 package com.tezchakana.tests;
 
 import com.tezchakana.screens.HomeScreen;
+import com.tezchakana.screens.OrdersScreen;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
@@ -20,11 +22,13 @@ public class OrdersTest extends BaseTest {
 
     @Test(groups = "safe")
     public void cancelIconOpensDialogWithoutCancellingOrder() {
-        new HomeScreen(driver)
-                .openProfileTab()
-                .openOrders()
-                .openFirstOrder()
-                .verifyCancelDialogOpensAndDismiss();
+        // Отмена возможна только у активного заказа на ранней стадии. Реальные заказы
+        // тест не создаёт - если активных нет, честно пропускается.
+        OrdersScreen orders = new HomeScreen(driver).openProfileTab().openOrders();
+        if (!orders.hasActiveOrders()) {
+            throw new SkipException("Нет активных заказов - проверять отмену не на чем");
+        }
+        orders.openFirstOrder().verifyCancelDialogOpensAndDismiss();
     }
 
     @Test(groups = "safe")
@@ -32,6 +36,7 @@ public class OrdersTest extends BaseTest {
         new HomeScreen(driver)
                 .openProfileTab()
                 .openOrders()
+                .showAnyOrders()
                 .openFirstOrder()
                 .verifyOrderDetailsShowConsistentInfo();
     }

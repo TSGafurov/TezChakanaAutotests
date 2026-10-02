@@ -54,6 +54,18 @@ public class AddressesScreen extends BaseScreen {
     // поэтому этого достаточно, чтобы найти и удалить только что добавленный адрес, не
     // завися от его текста (гео-подсказка на карте может не совпадать с введённым
     // запросом - см. AddAddressScreen.FIRST_SEARCH_RESULT).
+    // ADDR-02: адрес без метки - последняя строка content-desc карточки
+    // ("Boshlang‘ich manzil\n<адрес>").
+    public java.util.Set<String> savedAddressTexts() {
+        waitFor(ADDRESS_ITEM);
+        java.util.Set<String> addresses = new java.util.TreeSet<>();
+        for (var item : driver.findElements(ADDRESS_ITEM)) {
+            String[] lines = item.getAttribute("content-desc").split("\n");
+            addresses.add(lines[lines.length - 1].trim());
+        }
+        return addresses;
+    }
+
     public EditAddressScreen openFirstAddressForEditing() {
         waitFor(ADDRESS_ITEM).click();
         return new EditAddressScreen(driver);

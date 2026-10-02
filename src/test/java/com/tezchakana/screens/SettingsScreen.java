@@ -108,6 +108,21 @@ public class SettingsScreen extends BaseScreen {
 
     // SET-03: FAQ открывается ВНУТРИ приложения (аккордеон вопросов), а не во внешнем
     // браузере.
+    // SET-05: у пунктов FAQ вопрос и ответ лежат в одном content-desc ("Вопрос\nОтвет"),
+    // даже пока пункт свёрнут (проверено вживую 2026-09-30) - раскрывать не нужно.
+    public SettingsScreen openFaq() {
+        waitFor(FAQ_ROW).click();
+        waitFor(FAQ_FIRST_QUESTION);
+        return this;
+    }
+
+    public String faqAnswer(String questionContains) {
+        String text = waitFor(AppiumBy.androidUIAutomator(
+                "new UiSelector().descriptionContains(\"" + questionContains + "\")")).getAttribute("content-desc");
+        int newline = text.indexOf('\n');
+        return newline < 0 ? "" : text.substring(newline + 1).trim();
+    }
+
     public SettingsScreen verifyFaqOpensInApp() {
         waitFor(FAQ_ROW).click();
         Assert.assertTrue(waitFor(FAQ_FIRST_QUESTION).isDisplayed(), "Список FAQ не отобразился");

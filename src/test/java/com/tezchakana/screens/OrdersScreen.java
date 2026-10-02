@@ -32,10 +32,41 @@ public class OrdersScreen extends BaseScreen {
     }
 
     // ORDH-01: список активных заказов показывает вкладки и хотя бы одну карточку.
+    public OrdersScreen openCompletedTab() {
+        waitFor(COMPLETED_TAB).click();
+        waitFor(ORDER_CARD);
+        return this;
+    }
+
+    // Пустое состояние вкладки "Faol" ("Sizda faol buyurtmalar yo‘q") - обычное
+    // состояние реального аккаунта, когда все заказы доставлены или отменены.
+    private static final By NO_ACTIVE_ORDERS =
+            AppiumBy.androidUIAutomator("new UiSelector().descriptionContains(\"faol buyurtmalar yo\")");
+
+    // Тесты, которым нужен ЛЮБОЙ заказ (список, детали), не должны зависеть от того,
+    // есть ли сейчас активный: если "Faol" пуст, переключаемся на "Tugallangan".
+    public OrdersScreen showAnyOrders() {
+        waitFor(ACTIVE_TAB);
+        new org.openqa.selenium.support.ui.WebDriverWait(driver, WAIT_TIMEOUT).until(d ->
+                !d.findElements(ORDER_CARD).isEmpty() || !d.findElements(NO_ACTIVE_ORDERS).isEmpty());
+        if (driver.findElements(ORDER_CARD).isEmpty()) {
+            openCompletedTab();
+        }
+        return this;
+    }
+
+    public boolean hasActiveOrders() {
+        waitFor(ACTIVE_TAB);
+        new org.openqa.selenium.support.ui.WebDriverWait(driver, WAIT_TIMEOUT).until(d ->
+                !d.findElements(ORDER_CARD).isEmpty() || !d.findElements(NO_ACTIVE_ORDERS).isEmpty());
+        return !driver.findElements(ORDER_CARD).isEmpty();
+    }
+
     public OrdersScreen verifyOrdersShown() {
         Assert.assertTrue(waitFor(ACTIVE_TAB).isDisplayed(), "Вкладка \"Faol\" не отображается");
         Assert.assertTrue(driver.findElement(COMPLETED_TAB).isDisplayed(), "Вкладка \"Tugallangan\" не отображается");
-        Assert.assertFalse(driver.findElements(ORDER_CARD).isEmpty(), "Ни одной карточки заказа не отображается");
+        showAnyOrders();
+        Assert.assertFalse(driver.findElements(ORDER_CARD).isEmpty(), "Ни одной карточки заказа не отображается ни в одной вкладке");
         return this;
     }
 

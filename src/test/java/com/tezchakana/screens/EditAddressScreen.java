@@ -23,6 +23,20 @@ public class EditAddressScreen extends BaseScreen {
     private static final By DELETE_CONFIRM_MESSAGE = AppiumBy.accessibilityId("Manzilni o'chirmoqchimisiz?");
     private static final By DELETE_CONFIRM_BUTTON = AppiumBy.accessibilityId("O'chirish");
 
+    // ADDR-07 / BUG-004: поле "Manzil belgisi" открывает шторку со списком меток. В
+    // v1.1.8 (проверено вживую 2026-09-29) вместо списка там пустое состояние "So'rov
+    // bo'yicha hech qanday natija topilmadi" - поэтому все адреса называются
+    // "Boshlang‘ich manzil". Признак открытой шторки - её смерженный CTA "Tasdiqlash".
+    private static final By EDIT_SCREEN_TITLE = AppiumBy.accessibilityId("Manzilni o'zgartirish");
+    // Текст "Manzil belgisi" есть у двух узлов: подписи над полем и самого выпадающего
+    // поля. Нужен кликабельный - подпись тап игнорирует (2026-10-02).
+    private static final By LABEL_FIELD = AppiumBy.xpath(
+            "//*[@content-desc='Manzil belgisi' and @clickable='true']");
+    private static final By LABEL_SHEET = AppiumBy.androidUIAutomator(
+            "new UiSelector().descriptionContains(\"Tasdiqlash\")");
+    private static final By LABEL_LIST_EMPTY = AppiumBy.androidUIAutomator(
+            "new UiSelector().descriptionContains(\"natija topilmadi\")");
+
     public EditAddressScreen(AndroidDriver driver) {
         super(driver);
     }
@@ -33,6 +47,20 @@ public class EditAddressScreen extends BaseScreen {
     // и project-accidental-address-duplication-incident в памяти проекта про риск
     // слепых тапов рядом со смерженными CTA в этом приложении), поэтому тапается по
     // accessibility id, а не по координате.
+    // Ничего не сохраняет: шторку и экран редактирования закрываем аппаратным back
+    // (на экране есть смерженный "Saqlash" на весь экран - тапы по координатам опасны).
+    public boolean isAddressLabelListEmpty() {
+        waitFor(EDIT_SCREEN_TITLE);
+        waitFor(LABEL_FIELD).click();
+        waitFor(LABEL_SHEET);
+        sleep(java.time.Duration.ofSeconds(2));
+        boolean empty = !driver.findElements(LABEL_LIST_EMPTY).isEmpty();
+        driver.navigate().back();
+        waitFor(EDIT_SCREEN_TITLE);
+        driver.navigate().back();
+        return empty;
+    }
+
     public AddressesScreen delete() {
         tapAt(scaledX(DELETE_ICON_REF_X), scaledY(DELETE_ICON_REF_Y));
         waitFor(DELETE_CONFIRM_MESSAGE);

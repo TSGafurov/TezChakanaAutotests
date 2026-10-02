@@ -89,6 +89,28 @@ public class OrderDetailsScreen extends BaseScreen {
         return this;
     }
 
+    // ORDH-03 / BUG-001: "Jami" должен быть равен "Mahsulotlar uchun" + "Yetkazib
+    // berish". У доставленного заказа блок итога виден без прокрутки (проверено вживую
+    // 2026-09-30); у активного он ниже края экрана, поэтому один свайп вверх.
+    private static final By PRODUCTS_TOTAL_LABEL = AppiumBy.accessibilityId("Mahsulotlar uchun");
+    private static final By DELIVERY_FEE_LABEL = AppiumBy.accessibilityId("Yetkazib berish");
+    private static final By GRAND_TOTAL_LABEL = AppiumBy.accessibilityId("Jami");
+
+    public OrderDetailsScreen verifyGrandTotalIncludesDeliveryFee() {
+        waitFor(ORDER_ITEMS_BLOCK);
+        if (driver.findElements(GRAND_TOTAL_LABEL).isEmpty()) {
+            swipeUpOnScreen();
+        }
+        long products = Long.parseLong(digitsOf(textRightOf(PRODUCTS_TOTAL_LABEL)));
+        long delivery = Long.parseLong(digitsOf(textRightOf(DELIVERY_FEE_LABEL)));
+        long grandTotal = Long.parseLong(digitsOf(textRightOf(GRAND_TOTAL_LABEL)));
+        close();
+        Assert.assertEquals(grandTotal, products + delivery,
+                "Jami (" + grandTotal + ") не равен Mahsulotlar uchun (" + products
+                        + ") + Yetkazib berish (" + delivery + ") в заказе " + numberOf(listCardText));
+        return this;
+    }
+
     // Стрелка "˅" закрывает детали и возвращает на список заказов ("Buyurtmalar").
     public void close() {
         tapAt(scaledX(TOP_LEFT_BUTTON_REF_X), scaledY(TOP_LEFT_BUTTON_REF_Y));
