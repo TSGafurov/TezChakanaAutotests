@@ -43,6 +43,11 @@
             <class name="com.tezchakana.tests.CheckoutDetailsTest"/>
         </classes>
     </test>
+    <test name="Checkout Form">
+        <classes>
+            <class name="com.tezchakana.tests.CheckoutFormTest"/>
+        </classes>
+    </test>
     <test name="Profile Authorized">
         <classes>
             <class name="com.tezchakana.tests.ProfileAuthorizedTest"/>

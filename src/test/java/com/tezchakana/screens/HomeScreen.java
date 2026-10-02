@@ -117,6 +117,26 @@ public class HomeScreen extends BaseScreen {
         return new BazarScreen(driver);
     }
 
+    // Общий путь к экрану оформления для тестов CHK-*: магазин из конфига → категория
+    // "Uy uchun bozorlik" → товар → корзина → "To'lovga o'tish". Для авторизованного
+    // аккаунта открывается сразу "Xarid qilish"; если вместо него просят войти, тест
+    // падает здесь, а не дальше на непонятном экране.
+    public PaymentScreen openCheckoutWithGroceryItem() {
+        StoreScreen store = openBazarTab().openStore(TestConfig.storeName());
+        if (store.hasItemsInCart()) {
+            store.openCartSummaryBar().clearCart();
+            store = openBazarTab().openStore(TestConfig.storeName());
+        }
+        LoginScreen login = store
+                .scrollToCategory(TestConfig.groceryCategoryLabel())
+                .addProductToCart(TestConfig.groceryProductName())
+                .openCartSummaryBar()
+                .proceedToCheckout();
+        Assert.assertFalse(login.isLoginPromptShown(),
+                "Вместо экрана оформления показан вход - аккаунт не авторизован");
+        return new PaymentScreen(driver).verifyDeliveryDetailsDisplayed();
+    }
+
     // PROF-G01/G02: вкладка профиля доступна с любого верхнеуровневого экрана (Home,
     // Bazar), returnToHomeScreen() здесь не для перехода на конкретный экран, а чтобы
     // гарантированно уйти со вложенных экранов (магазин/товар), где нижней навигации
